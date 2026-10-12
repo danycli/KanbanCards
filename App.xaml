@@ -24,46 +24,126 @@
                 <Setter Property="Foreground" Value="{StaticResource PrimaryText}" />
             </Style>
 
-            <!-- Modern Card Style -->
-            <Style x:Key="ModernCardStyle" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource CardBackground}" />
-                <Setter Property="CornerRadius" Value="12" />
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect Color="#000000" Opacity="0.08" ShadowDepth="4" BlurRadius="12" Direction="270" />
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- iOS-like Search Box -->
-            <Style x:Key="SearchBoxStyle" TargetType="TextBox">
-                <Setter Property="Background" Value="#E5E7EB" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Padding" Value="12,8" />
-                <Setter Property="FontSize" Value="14" />
-                <Setter Property="Foreground" Value="{StaticResource PrimaryText}" />
+            <!-- Minimalist Modern ScrollBar -->
+            <Style x:Key="ModernScrollBarThumb" TargetType="{x:Type Thumb}">
+                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                <Setter Property="IsTabStop" Value="false"/>
                 <Setter Property="Template">
                     <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                <ScrollViewer x:Name="PART_ContentHost" Margin="0" />
-                            </Border>
+                        <ControlTemplate TargetType="{x:Type Thumb}">
+                            <Border x:Name="thumbBorder" Background="#CBD5E1" CornerRadius="3" Margin="2,0,2,0"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="thumbBorder" Property="Background" Value="#94A3B8"/>
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="thumbBorder" Property="Background" Value="#64748B"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
-            
-            <!-- Circular Color Swatch RadioButton -->
-            <Style x:Key="ColorSwatchStyle" TargetType="RadioButton">
+
+            <Style TargetType="{x:Type ScrollBar}">
+                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Vertical">
+                        <Setter Property="Width" Value="8"/>
+                        <Setter Property="Height" Value="Auto"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                    <Grid Background="Transparent">
+                                        <Track x:Name="PART_Track" IsDirectionReversed="true">
+                                            <Track.Thumb>
+                                                <Thumb Style="{StaticResource ModernScrollBarThumb}"/>
+                                            </Track.Thumb>
+                                        </Track>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Modern Card Style -->
+            <Style x:Key="ModernCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource CardBackground}" />
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="#12000000" />
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#000000" Opacity="0.05" ShadowDepth="2" BlurRadius="8" Direction="270" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Title Bar Normal Button -->
+            <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground" Value="{StaticResource SecondaryText}"/>
+                <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Width" Value="32"/>
                 <Setter Property="Height" Value="32"/>
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Title Bar Close Button -->
+            <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground" Value="{StaticResource SecondaryText}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#FEE2E2"/>
+                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Circular Color Swatch RadioButton -->
+            <Style x:Key="ColorSwatchStyle" TargetType="RadioButton">
+                <Setter Property="Width" Value="26"/>
+                <Setter Property="Height" Value="26"/>
                 <Setter Property="Margin" Value="0,0,8,0"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="RadioButton">
                             <Grid>
-                                <Ellipse x:Name="OuterRing" StrokeThickness="2" Stroke="Transparent" Margin="-4"/>
+                                <Ellipse x:Name="OuterRing" StrokeThickness="2" Stroke="Transparent" Margin="-3"/>
                                 <Ellipse Fill="{TemplateBinding Background}" Stroke="#33000000" StrokeThickness="1"/>
                             </Grid>
                             <ControlTemplate.Triggers>
@@ -72,6 +152,37 @@
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="OuterRing" Property="Stroke" Value="#93C5FD"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Editor Circular Close Button -->
+            <Style x:Key="EditorCloseButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#18000000"/>
+                <Setter Property="Foreground" Value="#475569"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="ToolTip" Value="Close"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="14">
+                                <TextBlock x:Name="txt" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE8BB;" 
+                                           FontSize="10" Foreground="{TemplateBinding Foreground}" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#FEE2E2"/>
+                                    <Setter TargetName="txt" Property="Foreground" Value="#DC2626"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#FECACA"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -145,6 +256,77 @@
                                     <Setter Property="Background" Value="#E5E7EB" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Modern Tray ContextMenu & MenuItem Styles (Compact & Slim) -->
+            <Style x:Key="ModernContextMenuStyle" TargetType="{x:Type ContextMenu}">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+                <Setter Property="HasDropShadow" Value="False"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="6"/>
+                <Setter Property="MinWidth" Value="150"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ContextMenu}">
+                            <Border Background="Transparent" Padding="6">
+                                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="3,3">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" Opacity="0.12" ShadowDepth="3" BlurRadius="12" Direction="270"/>
+                                    </Border.Effect>
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                </Border>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernMenuItemStyle" TargetType="{x:Type MenuItem}">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="#1E293B"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+                <Setter Property="MinHeight" Value="28"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type MenuItem}">
+                            <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="5" Margin="0,1" Padding="8,4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0" Content="{TemplateBinding Icon}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <ContentPresenter Grid.Column="1" Content="{TemplateBinding Header}" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernMenuSeparatorStyle" TargetType="{x:Type Separator}">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Margin" Value="4,2"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Separator}">
+                            <Border Height="1" Background="#F1F5F9" SnapsToDevicePixels="True"/>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

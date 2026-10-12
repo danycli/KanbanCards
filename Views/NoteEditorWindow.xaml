@@ -1,7 +1,7 @@
 <Window x:Class="KanbanCards.Views.NoteEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Note Editor" Height="400" Width="320"
+        Title="Note Editor" Height="400" Width="340"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ResizeMode="NoResize" WindowStartupLocation="Manual">
     <Window.Triggers>
@@ -31,8 +31,13 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <Grid Grid.Row="0" Margin="16,12,16,8" Background="Transparent">
-                <StackPanel Orientation="Horizontal">
+            <Grid Grid.Row="0" Margin="14,14,14,6" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <RadioButton Background="#2196F3" Style="{StaticResource ColorSwatchStyle}"
                                  IsChecked="{Binding Color, Converter={StaticResource ColorConverter}, ConverterParameter='#90CAF9'}"/>
                     <RadioButton Background="#FBC02D" Style="{StaticResource ColorSwatchStyle}"
@@ -47,10 +52,9 @@
                                  IsChecked="{Binding Color, Converter={StaticResource ColorConverter}, ConverterParameter='#FFCC80'}"/>
                 </StackPanel>
                 
-                <Button Command="{Binding CloseCommand}" HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Background="Transparent" BorderThickness="0" Foreground="#9CA3AF" Cursor="Hand" Padding="8">
-                    <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE8BB;" FontSize="14" />
-                </Button>
+                <Button Grid.Column="1" Command="{Binding CloseCommand}" 
+                        Style="{StaticResource EditorCloseButtonStyle}" 
+                        VerticalAlignment="Center" Margin="8,0,0,0"/>
             </Grid>
 
             <Grid Grid.Row="1" Margin="16,8,16,0">

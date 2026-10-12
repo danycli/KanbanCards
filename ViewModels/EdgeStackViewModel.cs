@@ -43,7 +43,9 @@ public class EdgeStackViewModel : ViewModelBase
 {
     private readonly INoteService _noteService;
     private readonly IEditorService _editorService;
+    private readonly ISettingsService _settingsService;
     private ObservableCollection<Note> _allNotes = new();
+    private string _stackPosition = "Right";
     
     public ObservableCollection<NoteItem> VisibleNotes { get; } = new();
 
@@ -71,17 +73,50 @@ public class EdgeStackViewModel : ViewModelBase
     private int _scrollOffset = 0;
 
     public bool ShowAddButton => !_allNotes.Any();
+
+    public bool IsLeft => _stackPosition == "Left";
+    public HorizontalAlignment StackAlignment => IsLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+    public CornerRadius NoteCornerRadius => IsLeft ? new CornerRadius(0, 12, 12, 0) : new CornerRadius(12, 0, 0, 12);
+    public Thickness NoteBorderThickness => IsLeft ? new Thickness(0, 1, 1, 1) : new Thickness(1, 1, 0, 1);
+    public Point RenderTransformOrigin => IsLeft ? new Point(0, 0.5) : new Point(1, 0.5);
+    public HorizontalAlignment PlusHorizontalAlignment => IsLeft ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+    public Thickness PlusMargin => IsLeft ? new Thickness(0, -4, 12, 0) : new Thickness(12, -4, 0, 0);
+    public double TitleCanvasLeft => IsLeft ? 20 : 16;
     
-    public System.Windows.Thickness CollapsedAddMargin => VisibleNotes.Any() ? new System.Windows.Thickness(0, 2, -(280 - (48 - (VisibleNotes.Count * 4))), 0) : new System.Windows.Thickness(0, 2, -(280 - 48), 0);
-    public System.Windows.Thickness ExpandedAddMargin => VisibleNotes.Any() ? new System.Windows.Thickness(0, 2, -(280 - (280 - (VisibleNotes.Count * 16))), 0) : new System.Windows.Thickness(0, 2, 0, 0);
+    public Thickness CollapsedAddMargin
+    {
+        get
+        {
+            int count = VisibleNotes.Count;
+            int offset = count > 0 ? (48 - (count * 4)) : 48;
+            return IsLeft
+                ? new Thickness(-(280 - offset), 2, 0, 0)
+                : new Thickness(0, 2, -(280 - offset), 0);
+        }
+    }
+
+    public Thickness ExpandedAddMargin
+    {
+        get
+        {
+            int count = VisibleNotes.Count;
+            int offset = count > 0 ? (280 - (count * 16)) : 280;
+            return IsLeft
+                ? new Thickness(-(280 - offset), 2, 0, 0)
+                : new Thickness(0, 2, -(280 - offset), 0);
+        }
+    }
 
     public ICommand AddNoteCommand { get; }
     public ICommand EditNoteCommand { get; }
 
-    public EdgeStackViewModel(INoteService noteService, IEditorService editorService)
+    public EdgeStackViewModel(INoteService noteService, IEditorService editorService, ISettingsService settingsService)
     {
         _noteService = noteService;
         _editorService = editorService;
+        _settingsService = settingsService;
+        _stackPosition = _settingsService.LoadSettings().StackPosition;
+
         AddNoteCommand = new RelayCommand(_ => AddNote());
         EditNoteCommand = new RelayCommand(obj => {
             if (obj is Note note) _editorService.OpenEditor(note, false);
@@ -89,10 +124,33 @@ public class EdgeStackViewModel : ViewModelBase
         
         _noteService.NotesChanged += () =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() => _ = LoadNotesAsync());
+            Application.Current?.Dispatcher.Invoke(() => _ = LoadNotesAsync());
+        };
+
+        _settingsService.SettingsChanged += () =>
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                var settings = _settingsService.LoadSettings();
+                ApplySettings(settings.StackPosition);
+            });
         };
         
         _ = LoadNotesAsync();
+    }
+
+    public void ApplySettings(string stackPosition)
+    {
+        _stackPosition = stackPosition;
+        OnPropertyChanged(nameof(IsLeft));
+        OnPropertyChanged(nameof(StackAlignment));
+        OnPropertyChanged(nameof(NoteCornerRadius));
+        OnPropertyChanged(nameof(NoteBorderThickness));
+        OnPropertyChanged(nameof(RenderTransformOrigin));
+        OnPropertyChanged(nameof(PlusHorizontalAlignment));
+        OnPropertyChanged(nameof(PlusMargin));
+        OnPropertyChanged(nameof(TitleCanvasLeft));
+        UpdateVisibleNotes();
     }
 
     public async Task LoadNotesAsync()
@@ -120,6 +178,16 @@ public class EdgeStackViewModel : ViewModelBase
         UpdateVisibleNotes();
     }
 
+    private Thickness GetCollapsedMargin(int index) =>
+        IsLeft
+            ? new Thickness(-(280 - (48 - (index * 4))), 2, 0, 0)
+            : new Thickness(0, 2, -(280 - (48 - (index * 4))), 0);
+
+    private Thickness GetExpandedMargin(int index) =>
+        IsLeft
+            ? new Thickness(-(280 - (280 - (index * 16))), 2, 0, 0)
+            : new Thickness(0, 2, -(280 - (280 - (index * 16))), 0);
+
     private void UpdateVisibleNotes()
     {
         var toShow = _allNotes.Skip(_scrollOffset).Take(10).ToList();
@@ -133,8 +201,8 @@ public class EdgeStackViewModel : ViewModelBase
                 {
                     Note = toShow[i],
                     ZIndex = 100 - i, // Top items have higher Z-Index to overlap bottom items
-                    CollapsedMargin = new System.Windows.Thickness(0, 2, -(280 - (48 - (i * 4))), 0),
-                    ExpandedMargin = new System.Windows.Thickness(0, 2, -(280 - (280 - (i * 16))), 0)
+                    CollapsedMargin = GetCollapsedMargin(i),
+                    ExpandedMargin = GetExpandedMargin(i)
                 });
             }
         }
@@ -144,8 +212,8 @@ public class EdgeStackViewModel : ViewModelBase
             {
                 VisibleNotes[i].Note = toShow[i];
                 VisibleNotes[i].ZIndex = 100 - i;
-                VisibleNotes[i].CollapsedMargin = new System.Windows.Thickness(0, 2, -(280 - (48 - (i * 4))), 0);
-                VisibleNotes[i].ExpandedMargin = new System.Windows.Thickness(0, 2, -(280 - (280 - (i * 16))), 0);
+                VisibleNotes[i].CollapsedMargin = GetCollapsedMargin(i);
+                VisibleNotes[i].ExpandedMargin = GetExpandedMargin(i);
             }
         }
         

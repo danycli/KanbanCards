@@ -7,27 +7,31 @@
         MouseEnter="Window_MouseEnter" MouseLeave="Window_MouseLeave" MouseWheel="Window_MouseWheel"
         Loaded="Window_Loaded">
     
-    <Grid HorizontalAlignment="Right" Width="320" ClipToBounds="True">
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+    <Grid HorizontalAlignment="{Binding StackAlignment}" Width="320" ClipToBounds="True">
+        <StackPanel HorizontalAlignment="{Binding StackAlignment}" VerticalAlignment="Center">
             <!-- List of notes -->
-            <ItemsControl x:Name="NotesList" ItemsSource="{Binding VisibleNotes}" Margin="0,8,0,0" HorizontalAlignment="Right">
+            <ItemsControl x:Name="NotesList" ItemsSource="{Binding VisibleNotes}" Margin="0,8,0,0" HorizontalAlignment="{Binding StackAlignment}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel HorizontalAlignment="Right" />
+                        <StackPanel HorizontalAlignment="{Binding DataContext.StackAlignment, RelativeSource={RelativeSource AncestorType=Window}}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemContainerStyle>
                     <Style TargetType="ContentPresenter">
                         <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
-                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                        <Setter Property="HorizontalAlignment" Value="{Binding DataContext.StackAlignment, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     </Style>
                 </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border x:Name="NoteBorder" CornerRadius="12,0,0,12" Background="{Binding Note.Color}" 
-                                BorderThickness="1,1,0,1" BorderBrush="#20000000"
-                                HorizontalAlignment="Right" Cursor="Hand" 
-                                RenderTransformOrigin="1,0.5">
+                        <Border x:Name="NoteBorder" 
+                                CornerRadius="{Binding DataContext.NoteCornerRadius, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                Background="{Binding Note.Color}" 
+                                BorderThickness="{Binding DataContext.NoteBorderThickness, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                BorderBrush="#20000000"
+                                HorizontalAlignment="{Binding DataContext.StackAlignment, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                Cursor="Hand" 
+                                RenderTransformOrigin="{Binding DataContext.RenderTransformOrigin, RelativeSource={RelativeSource AncestorType=Window}}">
                         <Border.RenderTransform>
                             <ScaleTransform ScaleX="1" ScaleY="1" />
                         </Border.RenderTransform>
@@ -39,8 +43,10 @@
                         </Border.InputBindings>
                         <Grid ClipToBounds="True" IsHitTestVisible="False">
                             <Canvas IsHitTestVisible="False">
-                                <TextBlock x:Name="TitleText" Text="{Binding Note.Title}" 
-                                           Canvas.Left="16" Canvas.Top="12"
+                                <TextBlock x:Name="TitleText" Text="{Binding Note.DisplayTitle}" 
+                                           Canvas.Left="{Binding DataContext.TitleCanvasLeft, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                           Canvas.Top="12"
+                                           MaxWidth="230" TextTrimming="CharacterEllipsis"
                                            Foreground="#1F2937" FontWeight="SemiBold" Opacity="0"/>
                             </Canvas>
                         </Grid>
@@ -114,10 +120,13 @@
         </ItemsControl>
         
         <!-- Plus icon to add new notes -->
-        <Border x:Name="AddButtonBorder" CornerRadius="12,0,0,12" 
-                BorderThickness="1,1,0,1" BorderBrush="#20000000"
-                HorizontalAlignment="Right" Cursor="Hand" Panel.ZIndex="-1"
-                RenderTransformOrigin="1,0.5">
+        <Border x:Name="AddButtonBorder" 
+                CornerRadius="{Binding NoteCornerRadius}" 
+                BorderThickness="{Binding NoteBorderThickness}" 
+                BorderBrush="#20000000"
+                HorizontalAlignment="{Binding StackAlignment}" 
+                Cursor="Hand" Panel.ZIndex="-1"
+                RenderTransformOrigin="{Binding RenderTransformOrigin}">
             <Border.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1" />
             </Border.RenderTransform>
@@ -133,7 +142,10 @@
             <Border.InputBindings>
                 <MouseBinding MouseAction="LeftClick" Command="{Binding AddNoteCommand}" />
             </Border.InputBindings>
-            <TextBlock Text="+" FontSize="28" HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="White" FontWeight="Light" Margin="12,-4,0,0"/>
+            <TextBlock Text="+" FontSize="28" 
+                       HorizontalAlignment="{Binding PlusHorizontalAlignment}" 
+                       VerticalAlignment="Center" Foreground="White" FontWeight="Light" 
+                       Margin="{Binding PlusMargin}"/>
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Width" Value="280"/>

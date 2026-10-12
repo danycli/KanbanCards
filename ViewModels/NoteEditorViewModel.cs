@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using KanbanCards.Models;
 using KanbanCards.Services;
@@ -116,7 +117,15 @@ public class NoteEditorViewModel : ViewModelBase
     {
         if (!_isNew)
         {
-            // TODO: Add confirmation dialog as per requirements
+            Window? activeWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                                   ?? Application.Current.MainWindow;
+
+            bool confirmed = Views.ConfirmDeleteDialog.ShowConfirmation(activeWindow);
+            if (!confirmed)
+            {
+                return;
+            }
+
             await _noteService.DeleteNoteAsync(_note.Id);
         }
         RequestClose?.Invoke();

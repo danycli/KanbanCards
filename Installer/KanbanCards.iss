@@ -1,6 +1,6 @@
 [Setup]
 AppName=KanbanCards
-AppVersion=1.0
+AppVersion=1.1.0
 DefaultDirName={autopf}\KanbanCards
 DefaultGroupName=KanbanCards
 OutputDir=Output

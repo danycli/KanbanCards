@@ -51,6 +51,15 @@ public class SettingsViewModel : ViewModelBase
         set { _settings.StackPosition = value ? "Left" : "Right"; Save(); OnPropertyChanged(); OnPropertyChanged(nameof(IsStackPositionRight)); }
     }
 
+    public string AppVersion
+    {
+        get
+        {
+            var version = typeof(SettingsViewModel).Assembly.GetName().Version;
+            return version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.1.0";
+        }
+    }
+
     public SettingsViewModel(ISettingsService settingsService, IStartupService startupService)
     {
         _settingsService = settingsService;

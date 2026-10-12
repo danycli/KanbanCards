@@ -1,6 +1,5 @@
 <div align="center">
-  <img width="120" height="120" alt="image" src="https://github.com/user-attachments/assets/1cf718dc-6036-4773-8096-79cfe55f4c8d" />
-
+  <img src="https://via.placeholder.com/150/5C2D91/FFFFFF?text=KanbanCards" alt="KanbanCards Logo" width="120" height="120" />
 
   # 🗂️ KanbanCards
 

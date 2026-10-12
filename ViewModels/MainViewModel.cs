@@ -10,13 +10,26 @@ namespace KanbanCards.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private readonly INoteService _noteService;
-    private string _searchText = string.Empty;
-
     private readonly IEditorService _editorService;
+    private string _searchText = string.Empty;
+    private int _totalNotesCount = 0;
 
     public ObservableCollection<Note> FilteredNotes { get; } = new();
 
-    public bool IsEmpty => FilteredNotes.Count == 0;
+    public bool IsEmpty => FilteredNotes.Count == 0 && string.IsNullOrWhiteSpace(SearchText);
+    public bool IsSearchEmpty => FilteredNotes.Count == 0 && !string.IsNullOrWhiteSpace(SearchText);
+    public bool HasSearchText => !string.IsNullOrEmpty(SearchText);
+
+    public string NoteCountText
+    {
+        get
+        {
+            if (_totalNotesCount == 0) return "0 notes";
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                return $"{FilteredNotes.Count} of {_totalNotesCount}";
+            return _totalNotesCount == 1 ? "1 note" : $"{_totalNotesCount} notes";
+        }
+    }
 
     public string SearchText
     {
@@ -25,6 +38,7 @@ public class MainViewModel : ViewModelBase
         {
             if (SetProperty(ref _searchText, value))
             {
+                OnPropertyChanged(nameof(HasSearchText));
                 _ = LoadNotesAsync();
             }
         }
@@ -33,6 +47,7 @@ public class MainViewModel : ViewModelBase
     public ICommand LoadNotesCommand { get; }
     public ICommand AddNoteCommand { get; }
     public ICommand EditNoteCommand { get; }
+    public ICommand ClearSearchCommand { get; }
 
     public MainViewModel(INoteService noteService, IEditorService editorService)
     {
@@ -42,8 +57,15 @@ public class MainViewModel : ViewModelBase
         LoadNotesCommand = new RelayCommand(async _ => await LoadNotesAsync());
         AddNoteCommand = new RelayCommand(_ => AddNote());
         EditNoteCommand = new RelayCommand(note => EditNote((Note)note!));
+        ClearSearchCommand = new RelayCommand(_ => SearchText = string.Empty);
 
-        FilteredNotes.CollectionChanged += (s, e) => OnPropertyChanged(nameof(IsEmpty));
+        FilteredNotes.CollectionChanged += (s, e) =>
+        {
+            OnPropertyChanged(nameof(IsEmpty));
+            OnPropertyChanged(nameof(IsSearchEmpty));
+            OnPropertyChanged(nameof(NoteCountText));
+        };
+
         _noteService.NotesChanged += () =>
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() => _ = LoadNotesAsync());
@@ -55,6 +77,7 @@ public class MainViewModel : ViewModelBase
     public async Task LoadNotesAsync()
     {
         var allNotes = await _noteService.GetAllNotesAsync();
+        _totalNotesCount = allNotes.Count;
         
         var filtered = string.IsNullOrWhiteSpace(SearchText) 
             ? allNotes 
@@ -67,6 +90,10 @@ public class MainViewModel : ViewModelBase
         {
             FilteredNotes.Add(note);
         }
+
+        OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(IsSearchEmpty));
+        OnPropertyChanged(nameof(NoteCountText));
     }
 
     private void AddNote()

@@ -14,25 +14,58 @@ public partial class EdgeStackWindow : Window
 {
     private EdgeStackViewModel _viewModel;
     private readonly IEditorService _editorService;
+    private readonly ISettingsService _settingsService;
     private bool _isHovering;
 
-    public EdgeStackWindow(EdgeStackViewModel viewModel, IEditorService editorService)
+    public EdgeStackWindow(EdgeStackViewModel viewModel, IEditorService editorService, ISettingsService settingsService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _editorService = editorService;
+        _settingsService = settingsService;
         DataContext = _viewModel;
 
-        _viewModel.PropertyChanged += (s, e) => {
-        };
+        _settingsService.SettingsChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            var settings = _settingsService.LoadSettings();
+            if (settings.ShowNotesOnDesktop)
+            {
+                ApplyWindowPosition(settings.StackPosition);
+                _viewModel.ApplySettings(settings.StackPosition);
+                UpdateExpandedState(_viewModel.IsExpanded);
+                this.Show();
+            }
+            else
+            {
+                this.Hide();
+            }
+        });
+    }
+
+    private void ApplyWindowPosition(string stackPosition)
+    {
+        if (stackPosition == "Left")
+        {
+            this.Left = SystemParameters.VirtualScreenLeft;
+        }
+        else
+        {
+            this.Left = SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - this.Width;
+        }
+        this.Top = SystemParameters.WorkArea.Top;
+        this.Height = SystemParameters.WorkArea.Height;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        // Position window on the absolute far right of all connected monitors
-        this.Left = SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - this.Width;
-        this.Top = SystemParameters.WorkArea.Top;
-        this.Height = SystemParameters.WorkArea.Height;
+        var settings = _settingsService.LoadSettings();
+        ApplyWindowPosition(settings.StackPosition);
+        _viewModel.ApplySettings(settings.StackPosition);
     }
 
     private async void Window_MouseEnter(object sender, MouseEventArgs e)
@@ -70,11 +103,13 @@ public partial class EdgeStackWindow : Window
         UpdateExpandedState(_viewModel.IsExpanded);
     }
 
-
     private void UpdateExpandedState(bool expand)
     {
+        var settings = _settingsService.LoadSettings();
         var ease = new System.Windows.Media.Animation.QuarticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
-        var duration = TimeSpan.FromMilliseconds(250);
+        var duration = !settings.EnableAnimations
+            ? TimeSpan.Zero
+            : TimeSpan.FromMilliseconds(Math.Max(50, 450 - (settings.AnimationSpeed * 3)));
         
         for (int i = 0; i < NotesList.Items.Count; i++)
         {

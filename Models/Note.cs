@@ -21,4 +21,23 @@ public class Note
             return Title.Substring(0, 17) + "...";
         }
     }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string FormattedDate
+    {
+        get
+        {
+            var local = UpdatedAt.ToLocalTime();
+            var now = DateTime.Now;
+            if (local.Date == now.Date)
+            {
+                return local.ToString("h:mm tt");
+            }
+            if (local.Year == now.Year)
+            {
+                return local.ToString("MMM d");
+            }
+            return local.ToString("MMM d, yyyy");
+        }
+    }
 }
