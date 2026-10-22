@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150/5C2D91/FFFFFF?text=KanbanCards" alt="KanbanCards Logo" width="120" height="120" />
-
-  # 🗂️ KanbanCards
+  # KanbanCards
 
   **A modern, edge-docked sticky notes application for Windows, designed to keep your thoughts organized without cluttering your workspace.**
 
@@ -9,88 +7,95 @@
   ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
   ![WPF](https://img.shields.io/badge/Framework-WPF-5C2D91?style=for-the-badge)
   ![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+  ![Version](https://img.shields.io/badge/Version-1.1.0-6366F1?style=for-the-badge)
 
   ---
 </div>
 
-## 🌟 What is KanbanCards?
+## What is KanbanCards?
 
-**KanbanCards** is a sleek, non-intrusive productivity tool that lives exactly where you need it: tucked away on the right edge of your screen. Instead of floating randomly across your desktop, your notes stack into a beautiful, collapsed "staircase" that peeks out just enough to remind you they're there. 
+**KanbanCards** is a sleek, non-intrusive productivity tool that lives along the edges of your screen. Instead of floating chaotically across your desktop, your notes stack into a subtle, collapsed "staircase" that peeks out just enough to remind you of your tasks.
 
-Hover over the edge, and the stack smoothly slides out, ready for you to read, edit, or add new ideas!
+Hovering over the edge expands the cards smoothly, allowing you to quickly read, edit, or create notes. It also features a dedicated Main Board window with live search and note management.
 
-## ✨ Features
+## Features
 
-- 📐 **Edge-Docked Staircase Design**: Notes rest in a collapsed, layered stack on the edge of your screen. 
-- 🪄 **Smooth Hover Animations**: Slide in and out of view effortlessly with fluid WPF animations—no layout snapping!
-- 🎨 **Color-Coded Organization**: Assign beautiful pastel colors to individual notes to categorize your tasks visually.
-- 💾 **Persistent SQLite Storage**: Never lose a thought. Everything is auto-saved locally in a lightweight SQLite database.
-- 🖱️ **Draggable Editor**: Click a note to open its editor, and drag the editor anywhere on your screen.
-- 🌙 **System Tray Integration**: Quietly runs in the background. Access settings, manage startup behavior, and quit straight from your taskbar tray.
-- 📦 **One-Click Installer**: Comes with a proper `Inno Setup` Windows installer (`.exe`) to easily get it onto your system.
+- **Customizable Edge Docking**: Dock your notes staircase to either the **Left** or **Right** edge of your screen. Corners and animations dynamically adjust to match the screen bezel.
+- **Fluid Hover Animations**: Cards glide smoothly into view on hover with configurable animation speed and cubic easing.
+- **Main Board & Live Search**: Full-featured note management window with instant search filtering, note counter badges, and relative date timestamps.
+- **Color-Coded Organization**: Assign 6 distinct pastel card colors (Blue, Yellow, Green, Red, Purple, Orange) to visually group and prioritize tasks.
+- **Distraction-Free Note Editor**: Frameless, draggable note cards with a refined header, non-colliding palette swatches, and minimalist close buttons.
+- **Modern Modal Experience**: Custom in-app dialogs, including a branded delete confirmation popup and an elevated Settings window with backdrop dimming.
+- **Fluent Settings Menu**: Customize startup behavior, tray minimization, desktop overlay, dock side, animation speed, and toggles via clean iOS/Fluent-style switches and segmented tabs.
+- **Compact System Tray Integration**: Lightweight, native-feeling tray menu with Fluent glyphs for quick actions without clutter.
+- **Persistent Local Storage**: Data is safely auto-saved locally using SQLite and Entity Framework Core.
+- **Windows Installer**: Ready-to-use Inno Setup installer package with automatic desktop shortcuts and startup registration.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Windows 10 or Windows 11
-- [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (If running from source)
+- Windows 10 or Windows 11 (64-bit)
+- [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (included in self-contained release builds)
 
 ### Installation
 
-The easiest way to get KanbanCards on your system is to use the compiled setup installer:
+The easiest way to install KanbanCards is using the setup wizard:
 
-1. Locate the `KanbanCardsSetup.exe` installer inside the `Installer/Output` directory (or generate it by compiling `Installer/KanbanCards.iss` with Inno Setup).
-2. Run the installer and follow the wizard.
-3. Once installed, KanbanCards will automatically add a shortcut to your desktop and optionally launch on Windows startup!
+1. Download or locate `KanbanCardsSetup.exe` in `Installer/Output/` (or compile `Installer/KanbanCards.iss` with Inno Setup).
+2. Run the installer and follow the setup prompts.
+3. Once installed, launch KanbanCards from your Start Menu or Desktop shortcut.
 
 ### Building from Source
 
-If you want to tweak the code yourself:
+To build and run the project locally:
 
 ```powershell
 # Clone the repository
 git clone https://github.com/yourusername/KanbanCards.git
 cd KanbanCards
 
-# Build the project
+# Build the solution
 dotnet build
 
-# Run the app
+# Run the application
 dotnet run
 ```
 
-To create a single-file portable executable:
+To generate a self-contained, single-file release executable:
 
 ```powershell
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-## 🎮 How to Use
+## How to Use
 
-1. **Add a Note**: Hover over the right edge of your screen to expand the stack, then click the **`+`** icon on the bottom card.
-2. **Edit a Note**: Left-click on any expanded note to open the Note Editor.
-3. **Change Colors**: Inside the editor, pick from 6 different pastel themes (Blue, Yellow, Green, Red, Purple, Orange) at the top.
-4. **Delete a Note**: Click the **Delete** button in the bottom-left corner of the editor.
-5. **Settings**: Right-click the purple KanbanCards logo in your Windows System Tray (bottom right of your taskbar) and click **Settings**.
+1. **Create a Note**: Hover over your configured screen edge (Right or Left) to expand the staircase, then click the **`+`** card, or use the **`+`** button in the Main Board window.
+2. **Edit a Note**: Click any card in the stack or double-click a note in the Main Board to open the editor.
+3. **Customize Colors**: Select one of the 6 color circles in the editor header to instantly restyle the note.
+4. **Delete a Note**: Click **Delete** in the editor. A smooth confirmation dialog will appear to prevent accidental removal.
+5. **Search Notes**: Open the Main Board window to search across note titles and content in real time.
+6. **Adjust Settings**: Right-click the KanbanCards icon in the Windows notification area (system tray) or click the gear icon in the Main Board to change dock position, toggle animations, or adjust speed.
+7. **Keyboard Shortcuts**: Press `Esc` to close the Settings dialog or Note Editor at any time.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **C# / .NET 8** - Core application logic and runtime.
-- **WPF (Windows Presentation Foundation)** - UI framework and fluid animations.
-- **Entity Framework Core (SQLite)** - Database ORM for local persistent storage.
-- **H.NotifyIcon.Wpf** - Modern system tray and taskbar management.
-- **Inno Setup** - Windows installer compilation.
+- **WPF (Windows Presentation Foundation)** - Frameless hardware-accelerated UI and animations.
+- **Entity Framework Core & SQLite** - Local database storage and schema migrations.
+- **H.NotifyIcon.Wpf** - Win32 system tray lifecycle and taskbar integration.
+- **Inno Setup** - Windows installer compiler.
 
-## 🤝 Contributing
+## Contributing
 
-Contributions, issues, and feature requests are always welcome! Feel free to check the [issues page](#) if you want to contribute.
+Contributions, issues, and feature requests are welcome. Feel free to open an issue or pull request on GitHub.
 
-## 📄 License
+## License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
 
 ---
+
 <div align="center">
-  <i>Built with ❤️ to keep your workspace clean and your mind focused.</i>
+  <i>Built to keep your workspace clean and your mind focused.</i>
 </div>

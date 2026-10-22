@@ -1,10 +1,11 @@
 using KanbanCards.Models;
 using KanbanCards.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using System.Windows;
+using System.Windows.Input;
 
 namespace KanbanCards.ViewModels;
 
@@ -17,25 +18,18 @@ public class NoteItem : ViewModelBase
         set { _note = value; OnPropertyChanged(); }
     }
 
+    private int _slotIndex;
+    public int SlotIndex
+    {
+        get => _slotIndex;
+        set { _slotIndex = value; OnPropertyChanged(); }
+    }
+
     private int _zIndex;
     public int ZIndex
     {
         get => _zIndex;
         set { _zIndex = value; OnPropertyChanged(); }
-    }
-
-    private System.Windows.Thickness _collapsedMargin;
-    public System.Windows.Thickness CollapsedMargin
-    {
-        get => _collapsedMargin;
-        set { _collapsedMargin = value; OnPropertyChanged(); }
-    }
-
-    private System.Windows.Thickness _expandedMargin;
-    public System.Windows.Thickness ExpandedMargin
-    {
-        get => _expandedMargin;
-        set { _expandedMargin = value; OnPropertyChanged(); }
     }
 }
 
@@ -46,31 +40,21 @@ public class EdgeStackViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private ObservableCollection<Note> _allNotes = new();
     private string _stackPosition = "Right";
-    
+    private int _scrollOffset = 0;
+    private bool _isExpanded;
+
     public ObservableCollection<NoteItem> VisibleNotes { get; } = new();
 
-    private bool _isExpanded;
+    public event Action<int>? ScrollShifted;
+    public event Action? NotesUpdated;
+
     public bool IsExpanded
     {
         get => _isExpanded;
         set => SetProperty(ref _isExpanded, value);
     }
 
-    private double _expandedWidth = 30;
-    public double ExpandedWidth
-    {
-        get => _expandedWidth;
-        set => SetProperty(ref _expandedWidth, value);
-    }
-
-    private Visibility _textVisibility = Visibility.Collapsed;
-    public Visibility TextVisibility
-    {
-        get => _textVisibility;
-        set => SetProperty(ref _textVisibility, value);
-    }
-
-    private int _scrollOffset = 0;
+    public int ScrollOffset => _scrollOffset;
 
     public bool ShowAddButton => !_allNotes.Any();
 
@@ -81,31 +65,7 @@ public class EdgeStackViewModel : ViewModelBase
     public Point RenderTransformOrigin => IsLeft ? new Point(0, 0.5) : new Point(1, 0.5);
     public HorizontalAlignment PlusHorizontalAlignment => IsLeft ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     public Thickness PlusMargin => IsLeft ? new Thickness(0, -4, 12, 0) : new Thickness(12, -4, 0, 0);
-    public double TitleCanvasLeft => IsLeft ? 20 : 16;
-    
-    public Thickness CollapsedAddMargin
-    {
-        get
-        {
-            int count = VisibleNotes.Count;
-            int offset = count > 0 ? (48 - (count * 4)) : 48;
-            return IsLeft
-                ? new Thickness(-(280 - offset), 2, 0, 0)
-                : new Thickness(0, 2, -(280 - offset), 0);
-        }
-    }
-
-    public Thickness ExpandedAddMargin
-    {
-        get
-        {
-            int count = VisibleNotes.Count;
-            int offset = count > 0 ? (280 - (count * 16)) : 280;
-            return IsLeft
-                ? new Thickness(-(280 - offset), 2, 0, 0)
-                : new Thickness(0, 2, -(280 - offset), 0);
-        }
-    }
+    public Thickness TitleMargin => IsLeft ? new Thickness(20, 0, 16, 0) : new Thickness(16, 0, 20, 0);
 
     public ICommand AddNoteCommand { get; }
     public ICommand EditNoteCommand { get; }
@@ -118,10 +78,11 @@ public class EdgeStackViewModel : ViewModelBase
         _stackPosition = _settingsService.LoadSettings().StackPosition;
 
         AddNoteCommand = new RelayCommand(_ => AddNote());
-        EditNoteCommand = new RelayCommand(obj => {
+        EditNoteCommand = new RelayCommand(obj =>
+        {
             if (obj is Note note) _editorService.OpenEditor(note, false);
         });
-        
+
         _noteService.NotesChanged += () =>
         {
             Application.Current?.Dispatcher.Invoke(() => _ = LoadNotesAsync());
@@ -135,7 +96,7 @@ public class EdgeStackViewModel : ViewModelBase
                 ApplySettings(settings.StackPosition);
             });
         };
-        
+
         _ = LoadNotesAsync();
     }
 
@@ -149,76 +110,79 @@ public class EdgeStackViewModel : ViewModelBase
         OnPropertyChanged(nameof(RenderTransformOrigin));
         OnPropertyChanged(nameof(PlusHorizontalAlignment));
         OnPropertyChanged(nameof(PlusMargin));
-        OnPropertyChanged(nameof(TitleCanvasLeft));
+        OnPropertyChanged(nameof(TitleMargin));
         UpdateVisibleNotes();
+        NotesUpdated?.Invoke();
     }
 
     public async Task LoadNotesAsync()
     {
         var notes = await _noteService.GetAllNotesAsync();
         _allNotes = new ObservableCollection<Note>(notes);
+
+        int maxOffset = Math.Max(0, _allNotes.Count - 10);
+        if (_scrollOffset > maxOffset)
+        {
+            _scrollOffset = maxOffset;
+        }
+
         OnPropertyChanged(nameof(ShowAddButton));
         UpdateVisibleNotes();
+        NotesUpdated?.Invoke();
     }
 
-    public void Scroll(int delta)
+    public bool Scroll(int delta)
     {
-        if (_allNotes.Count <= 10) return;
-        
-        _scrollOffset += delta;
-        if (_scrollOffset < 0) _scrollOffset = 0;
-        if (_scrollOffset > _allNotes.Count - 10) _scrollOffset = _allNotes.Count - 10;
-        
+        if (_allNotes.Count <= 10) return false;
+
+        int maxOffset = _allNotes.Count - 10;
+        int newOffset = Math.Clamp(_scrollOffset + delta, 0, maxOffset);
+        if (newOffset == _scrollOffset) return false;
+
+        _scrollOffset = newOffset;
         UpdateVisibleNotes();
+        ScrollShifted?.Invoke(delta > 0 ? 1 : -1);
+        return true;
     }
 
-    public void ResetScroll()
+    public bool ResetScroll()
     {
+        if (_scrollOffset == 0) return false;
+        int oldOffset = _scrollOffset;
         _scrollOffset = 0;
         UpdateVisibleNotes();
+        ScrollShifted?.Invoke(-oldOffset);
+        return true;
     }
 
-    private Thickness GetCollapsedMargin(int index) =>
-        IsLeft
-            ? new Thickness(-(280 - (48 - (index * 4))), 2, 0, 0)
-            : new Thickness(0, 2, -(280 - (48 - (index * 4))), 0);
-
-    private Thickness GetExpandedMargin(int index) =>
-        IsLeft
-            ? new Thickness(-(280 - (280 - (index * 16))), 2, 0, 0)
-            : new Thickness(0, 2, -(280 - (280 - (index * 16))), 0);
-
-    private void UpdateVisibleNotes()
+    public void UpdateVisibleNotes()
     {
         var toShow = _allNotes.Skip(_scrollOffset).Take(10).ToList();
-        
-        if (VisibleNotes.Count != toShow.Count)
+
+        while (VisibleNotes.Count > toShow.Count)
         {
-            VisibleNotes.Clear();
-            for (int i = 0; i < toShow.Count; i++)
+            VisibleNotes.RemoveAt(VisibleNotes.Count - 1);
+        }
+
+        for (int i = 0; i < toShow.Count; i++)
+        {
+            if (i < VisibleNotes.Count)
+            {
+                VisibleNotes[i].Note = toShow[i];
+                VisibleNotes[i].SlotIndex = i;
+                VisibleNotes[i].ZIndex = 100 - i;
+            }
+            else
             {
                 VisibleNotes.Add(new NoteItem
                 {
                     Note = toShow[i],
-                    ZIndex = 100 - i, // Top items have higher Z-Index to overlap bottom items
-                    CollapsedMargin = GetCollapsedMargin(i),
-                    ExpandedMargin = GetExpandedMargin(i)
+                    SlotIndex = i,
+                    ZIndex = 100 - i
                 });
             }
         }
-        else
-        {
-            for (int i = 0; i < toShow.Count; i++)
-            {
-                VisibleNotes[i].Note = toShow[i];
-                VisibleNotes[i].ZIndex = 100 - i;
-                VisibleNotes[i].CollapsedMargin = GetCollapsedMargin(i);
-                VisibleNotes[i].ExpandedMargin = GetExpandedMargin(i);
-            }
-        }
-        
-        OnPropertyChanged(nameof(CollapsedAddMargin));
-        OnPropertyChanged(nameof(ExpandedAddMargin));
+
         OnPropertyChanged(nameof(ShowAddButton));
     }
 

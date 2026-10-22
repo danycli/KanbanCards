@@ -15,6 +15,15 @@ public partial class App : Application
 
     public App()
     {
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            try { File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash.log"), e.ExceptionObject.ToString()); } catch { }
+        };
+        DispatcherUnhandledException += (s, e) =>
+        {
+            try { File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_dispatcher.log"), e.Exception.ToString()); } catch { }
+        };
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {

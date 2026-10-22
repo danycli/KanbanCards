@@ -30,6 +30,7 @@ public class NoteService : INoteService
     public async Task<List<Note>> GetAllNotesAsync()
     {
         return await _context.Notes
+            .AsNoTracking()
             .OrderByDescending(n => n.CreatedAt)
             .ThenByDescending(n => n.Id)
             .ToListAsync();
