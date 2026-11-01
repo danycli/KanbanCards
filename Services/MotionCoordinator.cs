@@ -14,20 +14,13 @@ namespace KanbanCards.Services;
 /// </summary>
 public class MotionCoordinator
 {
-    private readonly Dictionary<UIElement, long> _activeTokens = new();
+    private class TokenHolder { public long Value; }
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<UIElement, TokenHolder> _activeTokens = new();
 
     private long NextToken(UIElement element)
     {
-        if (_activeTokens.TryGetValue(element, out long token))
-        {
-            token++;
-        }
-        else
-        {
-            token = 1;
-        }
-        _activeTokens[element] = token;
-        return token;
+        var holder = _activeTokens.GetOrCreateValue(element);
+        return ++holder.Value;
     }
 
     /// <summary>
@@ -73,7 +66,7 @@ public class MotionCoordinator
         {
             anim.Completed += (_, _) =>
             {
-                if (_activeTokens.TryGetValue(element, out long currentToken) && currentToken == token)
+                if (_activeTokens.TryGetValue(element, out var holder) && holder.Value == token)
                 {
                     completed();
                 }
@@ -126,7 +119,7 @@ public class MotionCoordinator
         {
             anim.Completed += (_, _) =>
             {
-                if (_activeTokens.TryGetValue(element, out long currentToken) && currentToken == token)
+                if (_activeTokens.TryGetValue(element, out var holder) && holder.Value == token)
                 {
                     completed();
                 }
@@ -177,7 +170,7 @@ public class MotionCoordinator
         {
             anim.Completed += (_, _) =>
             {
-                if (_activeTokens.TryGetValue(element, out long currentToken) && currentToken == token)
+                if (_activeTokens.TryGetValue(element, out var holder) && holder.Value == token)
                 {
                     completed();
                 }

@@ -17,8 +17,9 @@ public class Note
         get 
         {
             if (string.IsNullOrWhiteSpace(Title)) return "";
-            if (Title.Length <= 20) return Title;
-            return Title.Substring(0, 17) + "...";
+            var clean = System.Text.RegularExpressions.Regex.Replace(Title, @"\s+", " ").Trim();
+            if (clean.Length <= 20) return clean;
+            return clean.Substring(0, 17) + "...";
         }
     }
 

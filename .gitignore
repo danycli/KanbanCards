@@ -161,3 +161,40 @@ orleans.codegen.cs
 
 # Antigravity artifacts
 .gemini/
+
+# Application and Setup Logs & Dumps
+*.log
+*.log.old
+*.old
+*.dmp
+*.crash
+fullscreen_audit.log
+kanban_setup_debug.log
+setup_debug.log
+
+# Local SQLite databases
+*.db
+*.db-wal
+*.db-shm
+
+# Build & Packaging Temporary Artifacts
+*.pdb
+src/KanbanCards.Setup/app.zip
+Installer/Output/*.pdb
+
+# Environment & Sensitive Keys
+.env
+.env.*
+*.p12
+*.snk
+*.key
+*.pem
+
+# OS Artifacts
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Internal Scratch / Audit notes
+Codebase_Audit_And_Improvements.txt
+

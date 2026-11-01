@@ -7,11 +7,14 @@ using KanbanCards.Services;
 
 namespace KanbanCards.ViewModels;
 
-public class NoteEditorViewModel : ViewModelBase
+public class NoteEditorViewModel : ViewModelBase, IDisposable
 {
     private readonly INoteService _noteService;
     private Note _note;
     private bool _isNew;
+
+    public Note Note => _note;
+    public bool IsNew => _isNew;
 
     private System.Threading.CancellationTokenSource? _autosaveCts;
     
@@ -62,22 +65,23 @@ public class NoteEditorViewModel : ViewModelBase
 
         OkCommand = new RelayCommand(_ => SaveAndClose());
         DeleteCommand = new RelayCommand(_ => DeleteNote());
-        CloseCommand = new RelayCommand(_ => RequestClose?.Invoke());
+        CloseCommand = new RelayCommand(_ => CloseEditor());
     }
 
-    private async Task AutosaveAsync()
+    public async Task FlushAutosaveAsync()
     {
-        _autosaveCts?.Cancel();
-        _autosaveCts = new System.Threading.CancellationTokenSource();
-        var token = _autosaveCts.Token;
+        if (_autosaveCts != null)
+        {
+            _autosaveCts.Cancel();
+            _autosaveCts.Dispose();
+            _autosaveCts = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(Title))
+            return;
 
         try
         {
-            await Task.Delay(500, token);
-            
-            if (token.IsCancellationRequested || string.IsNullOrWhiteSpace(Title)) 
-                return;
-
             if (_isNew)
             {
                 await _noteService.CreateNoteAsync(_note);
@@ -88,33 +92,78 @@ public class NoteEditorViewModel : ViewModelBase
                 await _noteService.UpdateNoteAsync(_note);
             }
         }
+        catch (Exception ex)
+        {
+            FullScreenMonitorService.LogAudit($"[AUTOSAVE EXCEPTION] Failed to flush note: {ex.Message}");
+        }
+    }
+
+    private async Task AutosaveAsync()
+    {
+        // Ghost note prevention: newly created notes are only committed when confirmed by user
+        if (_isNew) return;
+
+        if (_autosaveCts != null)
+        {
+            _autosaveCts.Cancel();
+            _autosaveCts.Dispose();
+            _autosaveCts = null;
+        }
+        _autosaveCts = new System.Threading.CancellationTokenSource();
+        var token = _autosaveCts.Token;
+
+        try
+        {
+            await Task.Delay(500, token);
+            
+            if (token.IsCancellationRequested || string.IsNullOrWhiteSpace(Title)) 
+                return;
+
+            await _noteService.UpdateNoteAsync(_note);
+        }
         catch (TaskCanceledException)
         {
             // Ignored
+        }
+        catch (Exception ex)
+        {
+            FullScreenMonitorService.LogAudit($"[AUTOSAVE EXCEPTION] Background autosave failed: {ex.Message}");
         }
     }
 
     private async void SaveAndClose()
     {
-        _autosaveCts?.Cancel();
-        if (string.IsNullOrWhiteSpace(Title))
-            return; 
+        await FlushAutosaveAsync();
+        RequestClose?.Invoke();
+    }
 
-        if (_isNew)
+    private async void CloseEditor()
+    {
+        if (!_isNew)
         {
-            await _noteService.CreateNoteAsync(_note);
-            _isNew = false;
+            await FlushAutosaveAsync();
         }
         else
         {
-            await _noteService.UpdateNoteAsync(_note);
+            if (_autosaveCts != null)
+            {
+                _autosaveCts.Cancel();
+                _autosaveCts.Dispose();
+                _autosaveCts = null;
+            }
         }
-
         RequestClose?.Invoke();
     }
 
     private async void DeleteNote()
     {
+        if (_autosaveCts != null)
+        {
+            _autosaveCts.Cancel();
+            _autosaveCts.Dispose();
+            _autosaveCts = null;
+        }
+
         if (!_isNew)
         {
             Window? activeWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
@@ -129,5 +178,15 @@ public class NoteEditorViewModel : ViewModelBase
             await _noteService.DeleteNoteAsync(_note.Id);
         }
         RequestClose?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        if (_autosaveCts != null)
+        {
+            _autosaveCts.Cancel();
+            _autosaveCts.Dispose();
+            _autosaveCts = null;
+        }
     }
 }

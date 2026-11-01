@@ -1,0 +1,168 @@
+<Window x:Class="KanbanCards.Setup.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Kanban Cards Setup" Height="560" Width="490"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+
+    <Window.Effect>
+        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="28" ShadowDepth="8" Direction="270" />
+    </Window.Effect>
+
+    <Border Background="#F8FAFC" CornerRadius="16" BorderBrush="#E2E8F0" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Grid Grid.Row="0" Margin="14,0,10,0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="AppIcon.ico" Width="16" Height="16" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock x:Name="WindowTitleBlock" Text="Kanban Cards Setup" FontSize="12.5" FontWeight="SemiBold" Foreground="#64748B"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Style="{StaticResource CaptionMinButtonStyle}" Click="Minimize_Click" ToolTip="Minimize"/>
+                    <Button Style="{StaticResource CaptionCloseButtonStyle}" Click="Close_Click" Margin="4,0,0,0" ToolTip="Close"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- MAIN CONTENT AREA -->
+            <Grid Grid.Row="1" Margin="24,6,24,24">
+
+                <!-- 1. INSTALL CONFIG VIEW -->
+                <Grid x:Name="InstallConfigView" Visibility="Visible">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Hero Section -->
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,6,0,18">
+                        <Border Width="64" Height="64" CornerRadius="16" Background="#EEF2FF" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Image Source="AppIcon.ico" Width="42" Height="42" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Kanban Cards" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"/>
+                            <Border Background="#E0E7FF" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="v1.3.0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Fast, minimal sticky note cards docked to your screen edge" FontSize="12.5" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Settings Card -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1" Padding="16,14">
+                        <StackPanel>
+                            <!-- Path selection -->
+                            <TextBlock Text="INSTALLATION LOCATION" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,6"/>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="InstallPathBox" Grid.Column="0" Height="34" VerticalContentAlignment="Center" 
+                                         Padding="8,0" FontSize="12" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1"/>
+                                <Button Grid.Column="1" Content="Browse..." Style="{StaticResource SecondaryButtonStyle}" Height="34" Margin="8,0,0,0" Padding="12,0" Click="Browse_Click"/>
+                            </Grid>
+
+                            <Border Height="1" Background="#F1F5F9" Margin="0,0,0,12"/>
+
+                            <!-- Options -->
+                            <TextBlock Text="ADDITIONAL OPTIONS" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="StartWithWindowsCheck" Content="Start Kanban Cards automatically on Windows login" 
+                                      Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="DesktopShortcutCheck" Content="Create a Desktop shortcut" 
+                                      Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="StartMenuShortcutCheck" Content="Create a Start Menu shortcut" 
+                                      Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Actions -->
+                    <Grid Grid.Row="2" Margin="0,18,0,0">
+                        <Button Content="Cancel" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" Click="Close_Click"/>
+                        <Button Content="Install Now" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Click="Install_Click" Width="140"/>
+                    </Grid>
+                </Grid>
+
+                <!-- 2. UNINSTALL CONFIRM VIEW -->
+                <Grid x:Name="UninstallConfirmView" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Hero Section -->
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,10,0,20">
+                        <Border Width="64" Height="64" CornerRadius="16" Background="#FEF2F2" HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="26" Foreground="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Uninstall Kanban Cards" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="We're sorry to see you go! All application files will be removed." FontSize="12.5" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- User Data Preservation Card -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1" Padding="18">
+                        <StackPanel VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="&#xE946;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" Foreground="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Your notes database is preserved by default." FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}"/>
+                            </StackPanel>
+                            <TextBlock Text="If you plan to reinstall Kanban Cards later, keep this option unchecked so your cards will be right where you left them." 
+                                       FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                            <CheckBox x:Name="DeleteUserDataCheck" Content="Also delete all notes, board data, and user settings" 
+                                      Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Actions -->
+                    <Grid Grid.Row="2" Margin="0,18,0,0">
+                        <Button Content="Keep Kanban Cards" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" Click="Close_Click"/>
+                        <Button Content="Uninstall" Style="{StaticResource DangerButtonStyle}" HorizontalAlignment="Right" Click="Uninstall_Click" Width="140"/>
+                    </Grid>
+                </Grid>
+
+                <!-- 3. PROGRESS VIEW -->
+                <Grid x:Name="ProgressView" Visibility="Collapsed" VerticalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center" Width="380">
+                        <Border Width="64" Height="64" CornerRadius="16" Background="#EEF2FF" HorizontalAlignment="Center" Margin="0,0,0,16">
+                            <Image Source="AppIcon.ico" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Border>
+                        <TextBlock x:Name="ProgressTitleBlock" Text="Installing Kanban Cards..." FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="ProgressStatusBlock" Text="Preparing installation..." FontSize="13" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,6,0,20" HorizontalAlignment="Center"/>
+
+                        <!-- Progress Bar -->
+                        <Grid Margin="0,0,0,8">
+                            <Border Height="8" CornerRadius="4" Background="#E2E8F0"/>
+                            <Border x:Name="ProgressBarFill" Height="8" CornerRadius="4" Background="{StaticResource BrandBrush}" HorizontalAlignment="Left" Width="0"/>
+                        </Grid>
+                        <TextBlock x:Name="ProgressPercentBlock" Text="0%" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 4. FINISHED VIEW -->
+                <Grid x:Name="FinishedView" Visibility="Collapsed" VerticalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center" MaxWidth="380">
+                        <Border Width="68" Height="68" CornerRadius="20" Background="#ECFDF5" HorizontalAlignment="Center" Margin="0,0,0,18">
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="30" Foreground="#10B981" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="FinishedTitleBlock" Text="Kanban Cards is Ready!" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="FinishedMessageBlock" Text="Kanban Cards has been successfully installed on your computer." FontSize="13" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,6,0,24" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"/>
+
+                        <CheckBox x:Name="LaunchAfterFinishCheck" Content="Launch Kanban Cards now" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                        <Button x:Name="FinishActionButton" Content="Finish" Style="{StaticResource PrimaryButtonStyle}" Width="150" HorizontalAlignment="Center" Click="FinishAction_Click"/>
+                    </StackPanel>
+                </Grid>
+
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

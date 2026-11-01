@@ -6,9 +6,16 @@ namespace KanbanCards.Views;
 
 public partial class SettingsWindow : Window
 {
-    public SettingsWindow(SettingsViewModel viewModel)
+    public SettingsWindow(SettingsViewModel viewModel) : this(viewModel, true)
     {
-        InitializeComponent();
+    }
+
+    internal SettingsWindow(SettingsViewModel viewModel, bool initializeComponent)
+    {
+        if (initializeComponent)
+        {
+            InitializeComponent();
+        }
         DataContext = viewModel;
     }
 

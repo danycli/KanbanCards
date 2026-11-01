@@ -1,7 +1,7 @@
 [Setup]
 AppId=KanbanCards
 AppName=KanbanCards
-AppVersion=1.1.0
+AppVersion=1.3.0
 AppPublisher=Sahib
 DefaultDirName={autopf}\KanbanCards
 DefaultGroupName=KanbanCards
@@ -40,7 +40,7 @@ Name: "{autodesktop}\KanbanCards"; Filename: "{app}\KanbanCards.exe"; Tasks: des
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "KanbanCards"; ValueData: """{app}\KanbanCards.exe"""; Tasks: startupicon; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{app}\KanbanCards.exe"; Description: "{cm:LaunchProgram,KanbanCards}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\KanbanCards.exe"; Description: "{cm:LaunchProgram,KanbanCards}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
 [UninstallRun]
 Filename: "taskkill.exe"; Parameters: "/f /im KanbanCards.exe"; Flags: runhidden; RunOnceId: "StopKanbanCardsOnUninstall"
@@ -59,6 +59,16 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   StopRunningApp();
   Result := '';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+begin
+  if CurStep = ssDone then
+  begin
+    Exec(ExpandConstant('{app}\KanbanCards.exe'), '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
+  end;
 end;
 
 function InitializeUninstall(): Boolean;

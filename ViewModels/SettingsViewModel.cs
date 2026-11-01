@@ -1,5 +1,5 @@
-using KanbanCards.Services;
 using System.Windows.Input;
+using KanbanCards.Services;
 
 namespace KanbanCards.ViewModels;
 
@@ -7,7 +7,10 @@ public class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsService _settingsService;
     private readonly IStartupService _startupService;
+    private readonly IUpdateService _updateService;
     private AppSettings _settings;
+    private string _updateStatusText = "Check for Updates";
+    private bool _isCheckingUpdates;
 
     public bool StartWithWindows
     {
@@ -51,20 +54,56 @@ public class SettingsViewModel : ViewModelBase
         set { _settings.StackPosition = value ? "Left" : "Right"; Save(); OnPropertyChanged(); OnPropertyChanged(nameof(IsStackPositionRight)); }
     }
 
-    public string AppVersion
+    public bool AutoCheckForUpdates
     {
-        get
-        {
-            var version = typeof(SettingsViewModel).Assembly.GetName().Version;
-            return version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.1.0";
-        }
+        get => _settings.AutoCheckForUpdates;
+        set { _settings.AutoCheckForUpdates = value; Save(); OnPropertyChanged(); }
     }
 
-    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService)
+    public string UpdateStatusText
+    {
+        get => _updateStatusText;
+        set => SetProperty(ref _updateStatusText, value);
+    }
+
+    public bool IsCheckingUpdates
+    {
+        get => _isCheckingUpdates;
+        set => SetProperty(ref _isCheckingUpdates, value);
+    }
+
+    public string AppVersion => $"v{_updateService.CurrentVersion}";
+
+    public ICommand CheckForUpdatesCommand { get; }
+
+    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IUpdateService updateService)
     {
         _settingsService = settingsService;
         _startupService = startupService;
+        _updateService = updateService;
         _settings = _settingsService.LoadSettings();
+
+        CheckForUpdatesCommand = new RelayCommand(async _ =>
+        {
+            if (IsCheckingUpdates) return;
+
+            IsCheckingUpdates = true;
+            UpdateStatusText = "Checking...";
+
+            var result = await _updateService.CheckForUpdatesAsync(manual: true);
+            IsCheckingUpdates = false;
+
+            if (result != null)
+            {
+                UpdateStatusText = $"Update Available: v{result.Version}";
+                App.ShowUpdateNotice(_updateService, result);
+            }
+            else
+            {
+                UpdateStatusText = _updateService.StatusMessage ?? "You're on the latest version.";
+                App.ShowUpToDateNotice(_updateService.CurrentVersion, _updateService.StatusMessage);
+            }
+        });
     }
 
     private void Save()

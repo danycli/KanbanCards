@@ -79,6 +79,8 @@ public class MockEditorService : IEditorService
         LastOpenedNote = note;
         LastOpenedIsNew = isNew;
     }
+
+    public bool IsNoteOpen(int noteId) => LastOpenedNote?.Id == noteId;
 }
 
 public class MotionAndStackTests
@@ -403,5 +405,69 @@ public class MotionAndStackTests
 
         Assert.Equal(0, vm.ScrollOffset);
         Assert.Equal(10, vm.VisibleNotes.Count);
+    }
+
+    [Fact]
+    public void EdgeStackWindow_ApplyWindowPosition_PinsCleanlyToWorkArea()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            var noteService = new MockNoteService();
+            var settingsService = new MockSettingsService();
+            var editorService = new MockEditorService();
+            var fullScreenMonitorService = new MockFullScreenMonitorService();
+            var vm = new EdgeStackViewModel(noteService, editorService, settingsService);
+
+            var window = new KanbanCards.Views.EdgeStackWindow(vm, editorService, settingsService, fullScreenMonitorService, initializeComponent: false);
+            window.Width = 320;
+
+            var workArea = System.Windows.SystemParameters.WorkArea;
+
+            // Test Right position
+            window.ApplyWindowPosition("Right");
+            Assert.Equal(workArea.Left + workArea.Width - window.Width, window.Left);
+            Assert.Equal(workArea.Top, window.Top);
+            Assert.Equal(workArea.Height, window.Height);
+
+            // Test Left position
+            window.ApplyWindowPosition("Left");
+            Assert.Equal(workArea.Left, window.Left);
+            Assert.Equal(workArea.Top, window.Top);
+            Assert.Equal(workArea.Height, window.Height);
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void EdgeStackWindow_DisplaySettingsChanged_RepositionWindowAndCleansUpOnClosed()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            var noteService = new MockNoteService();
+            var settingsService = new MockSettingsService();
+            settingsService.Settings.StackPosition = "Left";
+            var editorService = new MockEditorService();
+            var fullScreenMonitorService = new MockFullScreenMonitorService();
+            var vm = new EdgeStackViewModel(noteService, editorService, settingsService);
+
+            var window = new KanbanCards.Views.EdgeStackWindow(vm, editorService, settingsService, fullScreenMonitorService, initializeComponent: false);
+            window.Width = 320;
+
+            // Trigger DisplaySettingsChanged event
+            window.OnDisplaySettingsChanged(null, EventArgs.Empty);
+
+            var workArea = System.Windows.SystemParameters.WorkArea;
+            Assert.Equal(workArea.Left, window.Left);
+            Assert.Equal(workArea.Top, window.Top);
+            Assert.Equal(workArea.Height, window.Height);
+
+            // Cleanly close and unhook static SystemEvents handler
+            window.Close();
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
     }
 }

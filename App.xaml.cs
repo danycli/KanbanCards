@@ -11,19 +11,42 @@ namespace KanbanCards;
 
 public partial class App : Application
 {
+    public static bool IsShuttingDown { get; set; } = false;
     private IHost _host;
+    private ISingleInstanceService? _singleInstanceService;
 
     public App()
     {
+        // Global exception safety for long-running stability
+        this.DispatcherUnhandledException += (sender, args) =>
+        {
+            FullScreenMonitorService.LogAudit($"[UNHANDLED DISPATCHER EXCEPTION] {args.Exception}");
+            args.Handled = true; // Prevent app crash
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+        {
+            FullScreenMonitorService.LogAudit($"[UNHANDLED DOMAIN EXCEPTION] {args.ExceptionObject}");
+        };
+
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (sender, args) =>
+        {
+            FullScreenMonitorService.LogAudit($"[UNOBSERVED TASK EXCEPTION] {args.Exception}");
+            args.SetObserved(); // Prevent app crash on background task failure
+        };
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
-                services.AddDbContext<KanbanCardsDbContext>();
-                services.AddScoped<INoteService, NoteService>();
+                services.AddDbContextFactory<KanbanCardsDbContext>();
+                services.AddSingleton<INoteService, NoteService>();
                 services.AddSingleton<IEditorService, EditorService>();
                 services.AddSingleton<ISettingsService, SettingsService>();
                 services.AddSingleton<IStartupService, StartupService>();
                 services.AddSingleton<ITrayService, TrayService>();
+                services.AddSingleton<IFullScreenMonitorService, FullScreenMonitorService>();
+                services.AddSingleton<ISingleInstanceService, SingleInstanceService>();
+                services.AddSingleton<IUpdateService, UpdateService>();
                 services.AddTransient<ViewModels.MainViewModel>();
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<ViewModels.EdgeStackViewModel>();
@@ -36,15 +59,51 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        _singleInstanceService = new SingleInstanceService();
+        if (!_singleInstanceService.TryAcquire())
+        {
+            FullScreenMonitorService.LogAudit("[SINGLE INSTANCE] Another instance of Kanban Cards is already running. Signaling window activation and exiting.");
+            _singleInstanceService.SignalExistingInstance();
+            _singleInstanceService.Dispose();
+            _singleInstanceService = null;
+            Shutdown();
+            return;
+        }
+
         try
         {
             await _host.StartAsync();
 
-            using (var scope = _host.Services.CreateScope())
+            _singleInstanceService.RegisterWakeupHandler(() =>
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<KanbanCardsDbContext>();
+                Dispatcher.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        var trayService = _host.Services.GetService<ITrayService>();
+                        trayService?.OpenMainWindow();
+                    }
+                    catch (Exception ex)
+                    {
+                        FullScreenMonitorService.LogAudit($"[SINGLE INSTANCE ERROR] Failed to activate window on wakeup: {ex.Message}");
+                    }
+                });
+            });
+
+            var contextFactory = _host.Services.GetRequiredService<IDbContextFactory<KanbanCardsDbContext>>();
+            using (var dbContext = contextFactory.CreateDbContext())
+            {
                 dbContext.Database.Migrate();
+                try
+                {
+                    dbContext.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+                    dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_Notes_CreatedAt ON Notes(CreatedAt DESC);");
+                }
+                catch { }
             }
+
+            var fullScreenMonitor = _host.Services.GetRequiredService<IFullScreenMonitorService>();
+            fullScreenMonitor.Start();
 
             var trayService = _host.Services.GetRequiredService<ITrayService>();
             trayService.Initialize();
@@ -52,16 +111,27 @@ public partial class App : Application
             var settingsService = _host.Services.GetRequiredService<ISettingsService>();
             var settings = settingsService.LoadSettings();
 
-            if (settings.ShowNotesOnDesktop)
+            var edgeStack = _host.Services.GetRequiredService<Views.EdgeStackWindow>();
+            if (settings.ShowNotesOnDesktop && !fullScreenMonitor.IsFullScreenActive)
             {
-                var edgeStack = _host.Services.GetRequiredService<Views.EdgeStackWindow>();
                 edgeStack.Show();
             }
+
+            if (!settings.LaunchMinimizedToTray)
+            {
+                trayService.OpenMainWindow();
+            }
+
+            // GitHub Update System initialization
+            var updateService = _host.Services.GetRequiredService<IUpdateService>();
+            updateService.UpdateAvailable += (s, updateInfo) => ShowUpdateNotice(updateService, updateInfo);
+            updateService.StartBackgroundChecks();
             
             base.OnStartup(e);
         }
         catch (Exception ex)
         {
+            FullScreenMonitorService.LogAudit($"[STARTUP EXCEPTION] {ex}");
             MessageBox.Show($"Startup failed: {ex.Message}\n{ex.StackTrace}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
         }
@@ -69,6 +139,21 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        IsShuttingDown = true;
+        _singleInstanceService?.Dispose();
+        _singleInstanceService = null;
+
+        var fullScreenMonitor = _host.Services.GetService<IFullScreenMonitorService>();
+        fullScreenMonitor?.Stop();
+        fullScreenMonitor?.Dispose();
+
+        var updateService = _host.Services.GetService<IUpdateService>();
+        updateService?.StopBackgroundChecks();
+        if (updateService is IDisposable disposableUpdate)
+        {
+            disposableUpdate.Dispose();
+        }
+
         var trayService = _host.Services.GetRequiredService<ITrayService>();
         trayService.Shutdown();
 
@@ -76,5 +161,54 @@ public partial class App : Application
         _host.Dispose();
         
         base.OnExit(e);
+    }
+
+    public static void ShowUpdateNotice(IUpdateService updateService, Models.UpdateInfo updateInfo)
+    {
+        var app = Current;
+        if (app == null) return;
+
+        FullScreenMonitorService.LogAudit($"[UPDATE NOTICE] ShowUpdateNotice called for v{updateInfo.Version}");
+
+        app.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (Window w in app.Windows)
+            {
+                if (w is Views.UpdateNoticeWindow notice)
+                {
+                    FullScreenMonitorService.LogAudit("[UPDATE NOTICE] UpdateNoticeWindow already open. Activating.");
+                    notice.Activate();
+                    return;
+                }
+            }
+
+            FullScreenMonitorService.LogAudit($"[UPDATE NOTICE] Creating and showing UpdateNoticeWindow for v{updateInfo.Version}");
+            var vm = new ViewModels.UpdateNoticeViewModel(updateService, updateInfo);
+            var noticeWindow = new Views.UpdateNoticeWindow(vm);
+            noticeWindow.Show();
+        });
+    }
+
+    public static void ShowUpToDateNotice(string currentVersion, string? message = null)
+    {
+        var app = Current;
+        if (app == null) return;
+
+        FullScreenMonitorService.LogAudit($"[UPDATE NOTICE] ShowUpToDateNotice called: Current={currentVersion}, Msg={message}");
+
+        app.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (Window w in app.Windows)
+            {
+                if (w is Views.UpToDateNoticeWindow existing)
+                {
+                    existing.Activate();
+                    return;
+                }
+            }
+
+            var window = new Views.UpToDateNoticeWindow(currentVersion, message);
+            window.Show();
+        });
     }
 }

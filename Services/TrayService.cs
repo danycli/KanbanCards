@@ -3,6 +3,7 @@ using KanbanCards.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -14,6 +15,8 @@ public interface ITrayService
 {
     void Initialize();
     void Shutdown();
+    void OpenMainWindow();
+    void OpenSettingsWindow();
 }
 
 public class TrayService : ITrayService
@@ -89,8 +92,22 @@ public class TrayService : ITrayService
         // Settings
         var settingsItem = CreateMenuItem("Settings", "\uE713", "#64748B", (s, e) =>
         {
-            var settingsWindow = _serviceProvider.GetRequiredService<Views.SettingsWindow>();
-            settingsWindow.Show();
+            OpenSettingsWindow();
+        });
+
+        // Check for Updates
+        var updateItem = CreateMenuItem("Check for Updates", "\uE895", "#3B82F6", async (s, e) =>
+        {
+            var updateService = _serviceProvider.GetRequiredService<IUpdateService>();
+            var result = await updateService.CheckForUpdatesAsync(manual: true);
+            if (result != null)
+            {
+                App.ShowUpdateNotice(updateService, result);
+            }
+            else
+            {
+                App.ShowUpToDateNotice(updateService.CurrentVersion, updateService.StatusMessage);
+            }
         });
 
         // Separator
@@ -105,13 +122,21 @@ public class TrayService : ITrayService
         menu.Items.Add(addNoteItem);
         menu.Items.Add(viewNotesItem);
         menu.Items.Add(settingsItem);
+        menu.Items.Add(updateItem);
         menu.Items.Add(sep);
         menu.Items.Add(exitItem);
 
         _taskbarIcon.ContextMenu = menu;
         _taskbarIcon.TrayMouseDoubleClick += (s, e) => OpenMainWindow();
         _taskbarIcon.Visibility = Visibility.Visible;
-        _taskbarIcon.ForceCreate(false);
+        try
+        {
+            _taskbarIcon.ForceCreate(false);
+        }
+        catch (Exception ex)
+        {
+            FullScreenMonitorService.LogAudit($"[TRAY WARNING] ForceCreate non-fatal error: {ex.Message}");
+        }
     }
 
     private MenuItem CreateMenuItem(string title, string glyph, string iconColorHex, RoutedEventHandler onClick)
@@ -140,7 +165,7 @@ public class TrayService : ITrayService
         return item;
     }
 
-    private void OpenMainWindow()
+    public void OpenMainWindow()
     {
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
@@ -151,6 +176,24 @@ public class TrayService : ITrayService
         }
         var vm = mainWindow.DataContext as MainViewModel;
         if (vm != null) _ = vm.LoadNotesAsync();
+    }
+
+    public void OpenSettingsWindow()
+    {
+        var existing = Application.Current?.Windows.OfType<Views.SettingsWindow>().FirstOrDefault();
+        if (existing != null)
+        {
+            if (existing.WindowState == WindowState.Minimized)
+            {
+                existing.WindowState = WindowState.Normal;
+            }
+            existing.Activate();
+            return;
+        }
+
+        var settingsWindow = _serviceProvider.GetRequiredService<Views.SettingsWindow>();
+        settingsWindow.Show();
+        settingsWindow.Activate();
     }
 
     public void Shutdown()

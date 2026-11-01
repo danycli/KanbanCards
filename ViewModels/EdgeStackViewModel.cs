@@ -132,12 +132,12 @@ public class EdgeStackViewModel : ViewModelBase
         
         _noteService.NotesChanged += () =>
         {
-            Application.Current?.Dispatcher.Invoke(() => _ = LoadNotesAsync());
+            Application.Current?.Dispatcher.InvokeAsync(() => _ = LoadNotesAsync());
         };
 
         _settingsService.SettingsChanged += () =>
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var settings = _settingsService.LoadSettings();
                 ApplySettings(settings.StackPosition);

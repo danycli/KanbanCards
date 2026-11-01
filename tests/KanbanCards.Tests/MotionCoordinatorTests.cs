@@ -57,4 +57,32 @@ public class MotionCoordinatorTests
         thread.Start();
         thread.Join();
     }
+
+    [Fact]
+    public void MotionCoordinator_WeakReferences_AllowsUIElementGarbageCollection()
+    {
+        var thread = new Thread(() =>
+        {
+            var coordinator = new MotionCoordinator();
+            WeakReference weakElementRef = null!;
+
+            new Action(() =>
+            {
+                var border = new Border();
+                var translate = new TranslateTransform(0, 0);
+                border.RenderTransform = translate;
+                coordinator.AnimateX(border, translate, 100.0, TimeSpan.FromMilliseconds(50));
+                weakElementRef = new WeakReference(border);
+            })();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            Assert.False(weakElementRef.IsAlive, "UIElement must be garbage collected and not leaked by MotionCoordinator");
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
 }

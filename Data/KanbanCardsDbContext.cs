@@ -30,7 +30,25 @@ public class KanbanCardsDbContext : DbContext
         if (!options.IsConfigured)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
-            options.UseSqlite($"Data Source={DbPath}");
+            var connectionString = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            {
+                DataSource = DbPath,
+                Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWriteCreate,
+                DefaultTimeout = 5 // 5 second busy timeout to prevent "database is locked" errors
+            }.ToString();
+
+            options.UseSqlite(connectionString);
         }
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Note>(entity =>
+        {
+            entity.HasIndex(n => n.CreatedAt)
+                  .HasDatabaseName("IX_Notes_CreatedAt");
+        });
     }
 }

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\KanbanCards.csproj" />
+    <ProjectReference Include="..\..\src\KanbanCards.Setup\KanbanCards.Setup.csproj" />
   </ItemGroup>
 
   <ItemGroup>
