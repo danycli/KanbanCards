@@ -1,0 +1,29 @@
+<svg width="900" height="200" viewBox="0 0 900 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="closeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="50%" stop-color="#312E81" />
+      <stop offset="100%" stop-color="#1E1B4B" />
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="200" rx="16" fill="url(#closeGrad)" stroke="#4338CA" stroke-width="1.5" />
+
+  <!-- Subtle Accent Card Deco on Left -->
+  <g opacity="0.15" transform="translate(40, 25)">
+    <rect x="0" y="0" width="120" height="150" rx="12" fill="#FFFFFF" />
+    <rect x="15" y="15" width="90" height="16" rx="4" fill="#C7D2FE" />
+    <rect x="15" y="42" width="70" height="10" rx="3" fill="#E0E7FF" />
+    <rect x="15" y="58" width="80" height="10" rx="3" fill="#E0E7FF" />
+  </g>
+
+  <!-- Center Content -->
+  <g transform="translate(450, 60)" text-anchor="middle">
+    <!-- Star icon -->
+    <path d="M0 -30 L5 -16 L20 -15 L9 -5 L13 10 L0 1 L-13 10 L-9 -5 L-20 -15 L-5 -16 Z" fill="#FBBF24" />
+
+    <text y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="800" fill="#FFFFFF" letter-spacing="-0.3">A calmer workspace awaits.</text>
+    <text y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="400" fill="#C7D2FE">If KanbanCards made your desktop a little less chaotic, give it a star on GitHub.</text>
+    <text y="76" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="400" fill="#94A3B8">Free, open-source, and engineered for focus.</text>
+  </g>
+</svg>

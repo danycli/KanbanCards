@@ -1,0 +1,79 @@
+<svg width="900" height="280" viewBox="0 0 900 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="swatchShadow" x="-5%" y="-10%" width="110%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <rect width="900" height="280" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5" />
+
+  <!-- Section Header -->
+  <g transform="translate(32, 28)">
+    <circle cx="6" cy="6" r="5" fill="#6366F1" />
+    <text x="20" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#475569" letter-spacing="1">COLOR DESIGN SYSTEM</text>
+    <text x="0" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Six Calming Pastel Themes</text>
+    <text x="220" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="400" fill="#64748B">— Hand-tuned for eye comfort and visual task prioritization</text>
+  </g>
+
+  <!-- Row 1: Soft Sky, Butter Yellow, Mint Green -->
+  <!-- Card 1: Soft Sky -->
+  <g transform="translate(32, 80)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#E5F3FF" stroke="#2196F3" stroke-width="1.5" stroke-opacity="0.3" />
+    <circle cx="24" cy="28" r="10" fill="#2196F3" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Soft Sky</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#2196F3" fill-opacity="0.15" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#0284C7">#2196F3</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">General tracking, reminders &amp; tasks</text>
+  </g>
+
+  <!-- Card 2: Butter Yellow -->
+  <g transform="translate(320, 80)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#FFF9C4" stroke="#FBC02D" stroke-width="1.5" stroke-opacity="0.4" />
+    <circle cx="24" cy="28" r="10" fill="#FBC02D" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Butter Yellow</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#FBC02D" fill-opacity="0.2" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#B45309">#FBC02D</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">Immediate priority &amp; urgent actions</text>
+  </g>
+
+  <!-- Card 3: Mint Green -->
+  <g transform="translate(608, 80)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#E8F5E9" stroke="#4CAF50" stroke-width="1.5" stroke-opacity="0.3" />
+    <circle cx="24" cy="28" r="10" fill="#4CAF50" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Mint Green</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#4CAF50" fill-opacity="0.15" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#15803D">#4CAF50</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">Completed milestones &amp; verified work</text>
+  </g>
+
+  <!-- Row 2: Blush Red, Lavender Purple, Warm Peach -->
+  <!-- Card 4: Blush Red -->
+  <g transform="translate(32, 178)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#FFEBEE" stroke="#F44336" stroke-width="1.5" stroke-opacity="0.3" />
+    <circle cx="24" cy="28" r="10" fill="#F44336" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Blush Red</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#F44336" fill-opacity="0.15" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#B91C1C">#F44336</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">Critical blockers, bugs &amp; deadlines</text>
+  </g>
+
+  <!-- Card 5: Lavender Purple -->
+  <g transform="translate(320, 178)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#F3E5F5" stroke="#9C27B0" stroke-width="1.5" stroke-opacity="0.3" />
+    <circle cx="24" cy="28" r="10" fill="#9C27B0" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Lavender</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#9C27B0" fill-opacity="0.15" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#7E22CE">#9C27B0</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">Architecture, research &amp; brainstorms</text>
+  </g>
+
+  <!-- Card 6: Warm Peach -->
+  <g transform="translate(608, 178)" filter="url(#swatchShadow)">
+    <rect width="260" height="82" rx="12" fill="#FFF3E0" stroke="#FF9800" stroke-width="1.5" stroke-opacity="0.4" />
+    <circle cx="24" cy="28" r="10" fill="#FF9800" />
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="#0F172A">Warm Peach</text>
+    <rect x="180" y="18" width="66" height="20" rx="6" fill="#FF9800" fill-opacity="0.2" />
+    <text x="213" y="32" text-anchor="middle" font-family="Consolas, monospace" font-size="11" font-weight="600" fill="#C2410C">#FF9800</text>
+    <text x="24" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#475569">Agendas, follow-ups &amp; meetings</text>
+  </g>
+</svg>
