@@ -197,4 +197,8 @@ Desktop.ini
 
 # Internal Scratch / Audit notes
 Codebase_Audit_And_Improvements.txt
+convert_icon.ps1
+dotnet-install.ps1
+todo.md
+
 

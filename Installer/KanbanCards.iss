@@ -2,7 +2,7 @@
 AppId=KanbanCards
 AppName=KanbanCards
 AppVersion=1.3.0
-AppPublisher=Sahib
+AppPublisher=danycli
 DefaultDirName={autopf}\KanbanCards
 DefaultGroupName=KanbanCards
 OutputDir=Output

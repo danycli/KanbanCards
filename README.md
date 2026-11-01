@@ -1,191 +1,195 @@
 <div align="center">
 
-# 🗂️ KanbanCards
+# KanbanCards
 
-### *The sleek, edge-docked sticky notes workspace for Windows.*
+**Modern, edge-docked workspace for Windows.**
 
-**Keep your thoughts, quick reminders, and daily sprints effortlessly organized along your screen bezels without cluttering your desktop.**
-
-<br/>
-
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://microsoft.com/windows)
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![WPF](https://img.shields.io/badge/UI-WPF%20XAML-5C2D91?style=for-the-badge)](https://github.com/dotnet/wpf)
-[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
-[![Version](https://img.shields.io/badge/Release-v1.3.0-6366F1?style=for-the-badge)](https://github.com/danycli/KanbanCards/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=for-the-badge)](https://github.com/danycli/KanbanCards/pulls)
+An ultra-lightweight desktop sticky-note system that docks seamlessly along screen bezels. Built with .NET 8, WPF, and SQLite WAL for distraction-free note capture.
 
 <br/>
 
-[**Download Latest Setup**](https://github.com/danycli/KanbanCards/releases/latest) • [**Explore Features**](#-features) • [**Keyboard Shortcuts**](#-keyboard-shortcuts) • [**Architecture**](#-technical-architecture) • [**Quick Start**](#-quick-start)
+[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-2196F3?style=flat-square&logo=windows&logoColor=white)](https://microsoft.com/windows)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-9C27B0?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![WPF](https://img.shields.io/badge/UI-WPF%20XAML-4CAF50?style=flat-square)](https://github.com/dotnet/wpf)
+[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL-FF9800?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org/)
+[![Release](https://img.shields.io/badge/Release-v1.3.0-F44336?style=flat-square)](https://github.com/danycli/KanbanCards/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-607D8B?style=flat-square)](LICENSE)
+
+<br/>
+
+[Get Installer](#installation) &nbsp;•&nbsp; [Design Philosophy](#design-philosophy) &nbsp;•&nbsp; [Color System](#color-system) &nbsp;•&nbsp; [Engineering](#engineering-highlights) &nbsp;•&nbsp; [Shortcuts](#keyboard-shortcuts) &nbsp;•&nbsp; [Architecture](#system-architecture)
 
 ---
 
 </div>
 
-## 💡 Why KanbanCards?
+## Design Philosophy
 
-Traditional sticky notes clutter your screen, cover open browser tabs, and get lost behind windows. **KanbanCards** re-imagines desktop productivity with a sleek **edge-docked staircase stack**:
+Traditional desktop sticky notes clutter active monitors, get buried behind browser windows, and demand manual window management. 
 
-| Traditional Sticky Notes | 🗂️ KanbanCards |
-| :--- | :--- |
-| ❌ Float chaotically across open work windows | ✅ **Tucks away into screen bezels** until hovered |
-| ❌ Interrupt fullscreen games and media playback | ✅ **Smart multi-monitor fullscreen auto-suppression** |
-| ❌ High risk of SQLite locks and write stalls | ✅ **EF Core DbContext Factory + SQLite WAL mode** |
-| ❌ Slow, unindexed full database scans | ✅ **Instant debounced search with index-accelerated sorting** |
-| ❌ Clunky legacy multi-page setup wizards | ✅ **Custom-tailored native card installer & uninstaller** |
+KanbanCards rethinks note-taking through an **edge-docked staircase stack**:
+- **Bezel Anchoring**: Notes rest collapsed against the screen edge, showing only subtle pastel indicators.
+- **Fluid Inspection**: Hovering near the bezel smoothly expands the stack with cubic-bezier easing, exposing card titles and actions without stealing window focus.
+- **Context Preservation**: Full-featured Kanban Board provides live search, editing, and organization whenever a wider view is needed.
 
----
+### Workflow Comparison
 
-## ✨ Features
-
-### ⚡ **Edge-Docked Staircase Stack**
-- **Dynamic Bezel Adaptation**: Dock seamlessly to either the **Left** or **Right** edge of your primary screen.
-- **Fluid Hover Expansion**: Cards smoothly slide out with custom cubic-bezier easing (`EaseInOutCubic`), giving you instant glanceability without obscuring active work.
-- **DPI & Resolution Resilience**: Real-time listening to Windows display setting and DPI scale changes ensures cards never get cut off or misplaced.
-
-### 🖥️ **Smart Multi-Monitor & Fullscreen Shield**
-- **Non-Intrusive Presence**: Uses native Win32 window-rect detection to detect true foreground fullscreen apps (e.g., games, presentation slides, video players).
-- **Multi-Display Aware**: Only suppresses edge overlays if the fullscreen app is actually running on the same monitor as KanbanCards, leaving notes active across other screens!
-
-### 🔍 **Instant Search & Kanban Board**
-- **Debounced Live Filtering**: Search through titles and markdown content with a 150ms debounce window.
-- **Zero-Flicker In-Place Reconciliation**: Modifying notes updates UI state directly without jarring scroll resets or full-collection rebuilds.
-- **Relative Timestamps**: Human-friendly timestamps (*"Just now"*, *"2 hours ago"*, *"Yesterday"*).
-
-### 🎨 **Vibrant Pastel Color Swatches**
-- **6 Handpicked Colorways**: Assign Blue, Yellow, Green, Red, Purple, or Orange to visually organize projects, priorities, and sprints.
-- **Synchronized Radio Palettes**: Mutually exclusive selection indicators reflect active note themes in real time across the editor and edge stack.
-
-### 💾 **Resilient Local Persistence**
-- **Entity Framework Core DbContext Factory**: High-concurrency database access using fresh, isolated context lifetimes to eliminate concurrency leaks.
-- **SQLite Write-Ahead Logging (WAL)**: Concurrent reads never block writes; instant transactions with auto-flushing.
-- **Indexed Sorting**: Native SQLite index (`IX_Notes_CreatedAt`) guarantees sub-millisecond retrieval on large note archives.
-- **Atomic Settings Management**: Settings are serialized to temporary swapfiles and replaced atomically to eliminate corruption during power interruptions.
-
-### 📦 **Bespoke Native Setup & Uninstaller**
-- **Tailored Modern Card Experience**: Custom setup application styled identically to the app's minimalist aesthetic.
-- **Per-User Zero-UAC Installation**: Fast installation directly into `%LocalAppData%` without requiring elevated administrative privileges.
-- **Safe Data Retention**: Uninstalling cleanly removes binaries and shortcuts while safely leaving note databases intact in `%AppData%\KanbanCards`.
-
-### 🔄 **GitHub Automated Updates**
-- **Background Release Polling**: Periodically queries GitHub Releases API with automated exponential backoff and rate-limit awareness.
-- **Integrity Validation**: Verifies both SHA-256 file hashes and digital signatures prior to executing update packages.
-- **Seamless Silent Upgrade**: Updates install smoothly via command-line switches (`/SILENT /NORESTART`) without user disruption.
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-Speed up your workflow with native hotkey support:
-
-| Shortcut | Scope | Action |
+| Capability | Traditional Sticky Notes | KanbanCards |
 | :--- | :--- | :--- |
-| <kbd>Ctrl</kbd> + <kbd>N</kbd> | Global / Board | Create a new sticky note instantly |
-| <kbd>Ctrl</kbd> + <kbd>F</kbd> | Main Board | Focus the search input and select existing query |
-| <kbd>Enter</kbd> | Main Board | Open and edit the selected note |
-| <kbd>Delete</kbd> | Main Board | Trigger confirmation dialog to delete selected note |
-| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Note Editor | Save changes and close the editor |
-| <kbd>Esc</kbd> | Anywhere | Close dialogs, note editor, or settings menu |
+| **Desktop Presence** | Free-floating windows obscuring content | Collapsed edge staircase tucked against screen bezel |
+| **Fullscreen Media / Games** | Popups interrupt games and videos | Automatic per-monitor Win32 fullscreen suppression |
+| **Database Concurrency** | Prone to file locks during auto-save | SQLite WAL mode with isolated DbContext lifetimes |
+| **Search Performance** | Slow full scans with UI freeze | 150ms debounced queries backed by SQLite index |
+| **Installation Flow** | Multi-step legacy wizards requiring UAC | Per-user, zero-UAC modern card setup & uninstaller |
 
 ---
 
-## 🏗️ Technical Architecture
+## Color System
 
-The following diagram illustrates how KanbanCards processes interactions, coordinates motion, and persists state across services:
+KanbanCards utilizes a six-tone pastel palette designed to be easy on the eyes during prolonged desktop use:
+
+| Palette Name | Accent | Card Tint | Recommended Use |
+| :--- | :---: | :---: | :--- |
+| **Soft Sky** | `#2196F3` | `#E5F3FF` | Daily tasks, ongoing tracking |
+| **Butter Yellow** | `#FBC02D` | `#FFF9C4` | High-priority items, immediate focus |
+| **Mint Green** | `#4CAF50` | `#E8F5E9` | Completed milestones, verified references |
+| **Blush Red** | `#F44336` | `#FFEBEE` | Critical blockers, urgent deadlines |
+| **Lavender Purple** | `#9C27B0` | `#F3E5F5` | Architecture notes, brainstorms, research |
+| **Warm Peach** | `#FF9800` | `#FFF3E0` | Scheduled follow-ups, meeting agendas |
+
+---
+
+## Engineering Highlights
+
+### Edge Stacking & Motion Coordination
+- **Cubic Easing**: Stack expansion and retraction use custom cubic-bezier animations (`EaseInOutCubic`) for fluid physical response.
+- **Dynamic Bezel Anchoring**: Cards can dock to either the Left or Right edge of the screen; corner radiuses, hit-test offsets, and translation transforms automatically invert to match the bezel.
+- **Display Resolution & DPI Resilience**: Actively hooks into Windows display setting changes and DPI notifications (`WM_DPICHANGED`), dynamically recalculating work area geometry to prevent clipping or drift.
+
+### Smart Fullscreen Suppression
+- **Per-Monitor Win32 Query**: Checks foreground window bounds (`GetForegroundWindow`, `GetWindowRect`, `MonitorFromWindow`) to identify true borderless games or fullscreen video players.
+- **Multi-Monitor Awareness**: If a game is fullscreen on Monitor 2, notes remain accessible on Monitor 1. KanbanCards only hides when the fullscreen application is on the exact display hosting the stack.
+
+### Storage & Concurrency
+- **SQLite Write-Ahead Logging (WAL)**: Configured with `PRAGMA journal_mode=WAL;`, enabling simultaneous reads and writes without contention or thread blocking.
+- **Isolated DbContext Lifetimes**: Uses `IDbContextFactory<KanbanCardsDbContext>` to spawn isolated contexts per asynchronous operation, eliminating concurrency exceptions and entity tracking leaks.
+- **Optimized Indexing**: Database schema enforces `IX_Notes_CreatedAt` index (`CREATE INDEX IF NOT EXISTS IX_Notes_CreatedAt ON Notes(CreatedAt DESC)`), accelerating time-based queries across thousands of notes.
+- **Atomic Configuration Writes**: Application settings are serialized to a temporary file before being atomically swapped into `settings.json`, preventing data corruption during unexpected shutdowns.
+
+### Search & In-Place Reconciliation
+- **Debounced Input**: Search keystrokes are processed with a 150ms debouncing window to eliminate unnecessary database query churn.
+- **Zero-Flicker Updates**: Modifying note content or themes updates existing bound collections in-place, preventing scroll position resets and UI stutter.
+
+### Native Card Installer & Uninstaller
+- **Filee-Inspired Experience**: Custom-crafted installer styled with the exact card visual aesthetic of the main application.
+- **Zero UAC Requirement**: Installs per-user into `%LocalAppData%\Programs\KanbanCards`, bypassing administrator prompt barriers.
+- **Safe Data Preservation**: Uninstaller cleanly purges application binaries and shortcuts while safeguarding note databases in `%LocalAppData%\KanbanCards`.
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Scope | Function |
+| :--- | :--- | :--- |
+| <kbd>Ctrl</kbd> + <kbd>N</kbd> | Global / Board | Create a new note |
+| <kbd>Ctrl</kbd> + <kbd>F</kbd> | Main Board | Focus search field and select current query |
+| <kbd>Enter</kbd> | Main Board | Open selected note in editor |
+| <kbd>Delete</kbd> | Main Board | Prompt confirmation dialog to delete selected note |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Note Editor | Save note and dismiss editor |
+| <kbd>Esc</kbd> | Anywhere | Close dialogs, note editor, or settings window |
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph UI_Layer ["🖥️ Presentation Layer (WPF)"]
-        ESW["EdgeStackWindow\n(Edge Staircase Overlay)"]
-        MBW["MainWindow\n(Kanban Board Dashboard)"]
-        NEW["NoteEditorWindow\n(Card Editor & Palette)"]
-        STW["SettingsWindow\n(Fluent Preferences)"]
-        TRY["TrayService\n(Win32 Notification Area)"]
+    subgraph UI_Layer ["Presentation Layer"]
+        ESW["EdgeStackWindow<br/>(Edge Staircase Overlay)"]
+        MBW["MainWindow<br/>(Kanban Board Dashboard)"]
+        NEW["NoteEditorWindow<br/>(Card Editor & Palette)"]
+        STW["SettingsWindow<br/>(Fluent Preferences)"]
+        TRY["TrayService<br/>(Win32 Notification Area)"]
     end
 
-    subgraph Motion_Coordinator ["🎬 Motion & Behavior Coordinator"]
-        MC["MotionCoordinator\n• Cubic Easing Animations\n• Hover Expand / Collapse\n• Mouse Grab Offset"]
-        FSM["FullScreenMonitorService\n• Per-Monitor Win32 Query\n• Auto-Hides on Game / Presentation"]
-        SIM["SingleInstanceService\n• Named Mutex / EventWaitHandle\n• Signal & Bring-to-Front"]
+    subgraph Coordination ["Motion & System Coordination"]
+        MC["MotionCoordinator<br/>• Cubic Easing Animations<br/>• Edge Offset Recalculation"]
+        FSM["FullScreenMonitorService<br/>• Per-Monitor Win32 Bounds<br/>• Selective Overlay Suppression"]
+        SIM["SingleInstanceService<br/>• Mutex & Named Pipe Signaling"]
     end
 
-    subgraph Business_Services ["⚙️ Core Domain Services"]
-        NS["NoteService\n• In-place Reconciliation\n• Debounced Auto-Save"]
-        SS["SettingsService\n• Atomic Write Swap\n• Registry Run Key"]
-        US["UpdateService\n• GitHub Releases API\n• SHA-256 Checksum Validation"]
+    subgraph Services ["Domain Services"]
+        NS["NoteService<br/>• Debounced Autosave<br/>• In-Place Reconciliation"]
+        SS["SettingsService<br/>• Atomic Swap Persistence"]
+        US["UpdateService<br/>• GitHub Releases API & Hash Check"]
     end
 
-    subgraph Persistence ["💾 Persistence & Local Storage"]
-        DBCF["IDbContextFactory<KanbanCardsDbContext>"]
-        WAL["SQLite Database (WAL Mode)\n• IX_Notes_CreatedAt Index\n• EF Core Migrations"]
-        CFG["settings.json (Atomic File System)"]
+    subgraph Storage ["Persistence Layer"]
+        DBCF["IDbContextFactory&lt;KanbanCardsDbContext&gt;"]
+        WAL["SQLite Database (WAL Mode)<br/>• IX_Notes_CreatedAt Index"]
+        CFG["settings.json (Atomic File)"]
     end
 
-    ESW -->|User Hover / Click| MC
-    MC -->|Animate Cards| ESW
+    ESW -->|Mouse Hover / Leave| MC
+    MC -->|Coordinate Translation| ESW
     FSM -->|Suppress / Restore| ESW
-    MBW -->|Search / Edit / Delete| NS
-    NEW -->|Save Note & Theme| NS
-    STW -->|Update Preferences| SS
-    TRY -->|Quick Menu & Open| MBW
+    MBW -->|Search & Management| NS
+    NEW -->|Save Note & Palette| NS
+    STW -->|Save Preferences| SS
+    TRY -->|Menu Actions| MBW
 
     NS --> DBCF
     DBCF --> WAL
     SS --> CFG
-    US -->|Check for New Setup| WAL
+    US -->|Download Release| WAL
 ```
 
 ---
 
-## 🚀 Quick Start
+## Installation
 
-### Option 1: Modern Native Installer (Recommended)
+### Method 1: Modern Native Installer (Recommended)
 
-1. Grab the latest `KanbanCardsSetup.exe` from [**Releases**](https://github.com/danycli/KanbanCards/releases).
-2. Run the executable — enjoy a clean, instant setup experience.
-3. Launch **KanbanCards** from your Start Menu or Desktop.
+1. Download `KanbanCardsSetup.exe` from the [Latest Release](https://github.com/danycli/KanbanCards/releases/latest).
+2. Run the installer. No administrative rights or UAC prompts are required.
+3. Launch **KanbanCards** directly from your Start Menu or Desktop shortcut.
 
-### Option 2: Build from Source
+### Method 2: Building from Source
 
-#### Prerequisites
+**Requirements:**
 - Windows 10 or 11 (64-bit)
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Git
 
 ```powershell
-# 1. Clone the repository
+# Clone repository
 git clone https://github.com/danycli/KanbanCards.git
 cd KanbanCards
 
-# 2. Restore and run unit tests (94 tests)
+# Run automated tests (94 unit & integration tests)
 dotnet test tests/KanbanCards.Tests/KanbanCards.Tests.csproj
 
-# 3. Build and launch locally
+# Run application locally
 dotnet run --project KanbanCards.csproj
 ```
 
-#### Build the Native Installer
-
-To package the self-contained installer (`KanbanCardsSetup.exe`):
-
+**Compiling the Installer:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-installer.ps1
 ```
-The compiled installer will be available at `Installer\Output\KanbanCardsSetup.exe`.
+The compiled self-contained installer will be generated at `Installer\Output\KanbanCardsSetup.exe`.
 
 ---
 
-## 🧪 Comprehensive Test Suite
+## Automated Test Coverage
 
-KanbanCards includes a high-standard automated test suite with **94 Unit & Integration Tests** covering:
-- **Motion & Stack Geometry**: Verifies staircase positioning, mouse hit-testing, and dynamic bezel anchoring.
-- **Search & Debouncing**: Ensures fast query filtering and relative time formatters.
-- **Single Instance & Mutex**: Simulates duplicate launches, parameter signaling, and cross-process wakeup.
-- **Multi-Monitor Fullscreen Detection**: Emulates secondary-monitor fullscreen states and edge-stack safety.
-- **Update Engine Verification**: Validates semantic version parsing, SHA-256 signature checking, and quiet argument delegation.
-- **Installer & Clean Uninstaller**: Validates payload zip extraction, shortcut creation, registry uninstaller registration, and data preservation.
+The project includes an automated test suite with **94 unit and integration tests** verifying:
+- **Geometry & Coordinate Math**: Staircase positioning, edge hit-testing, and dynamic bezel anchoring.
+- **Search & Debouncing**: Query filtering accuracy and relative date formatters.
+- **Mutex & Single Instance**: Cross-process signaling and duplicate instance handling.
+- **Multi-Monitor Fullscreen Detection**: Win32 window-rect calculations and monitor-specific suppression logic.
+- **Database Concurrency**: Parallel operations against `IDbContextFactory` under SQLite WAL mode.
+- **Installer Lifecycle**: Archive decompression, shortcut generation, uninstall registry registration, and data preservation.
 
 ```powershell
 dotnet test tests/KanbanCards.Tests/KanbanCards.Tests.csproj --logger "console;verbosity=normal"
@@ -193,48 +197,39 @@ dotnet test tests/KanbanCards.Tests/KanbanCards.Tests.csproj --logger "console;v
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## Tech Stack
 
-| Component | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Runtime** | [.NET 8.0](https://dotnet.microsoft.com/) | Modern, high-performance C# managed runtime |
-| **UI Framework** | [WPF (Windows Presentation Foundation)](https://github.com/dotnet/wpf) | Hardware-accelerated XAML interface and storyboard animations |
-| **Data Layer** | [Entity Framework Core 8](https://learn.microsoft.com/ef/core/) | Object-relational mapping with isolated DbContext Factory |
-| **Database** | [SQLite](https://www.sqlite.org/) | Embedded, fast local database with WAL concurrency mode |
-| **System Tray** | [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon) | Win32 notification icon and context menu lifecycle |
-| **Testing** | [xUnit](https://xunit.net/) & [Moq](https://github.com/devlooped/moq) | Rigorous unit and integration test coverage |
+- **Framework**: .NET 8.0 (C# 12)
+- **UI Platform**: Windows Presentation Foundation (WPF) with hardware-accelerated XAML
+- **Data Access**: Entity Framework Core 8 with SQLite Provider
+- **Concurrency Mode**: SQLite Write-Ahead Logging (WAL)
+- **System Tray**: H.NotifyIcon.Wpf
+- **Testing**: xUnit, Moq, Microsoft.EntityFrameworkCore.InMemory
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions make open-source an incredible place to learn, inspire, and create. Any contributions you make are **greatly appreciated**!
+Contributions and feedback are welcome. To contribute:
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'feat: add some amazing feature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/my-feature`.
+3. Commit your changes: `git commit -m 'feat: add my feature'`.
+4. Push to your branch: `git push origin feature/my-feature`.
+5. Submit a Pull Request.
 
 ---
+
+## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for complete terms.
+
+<br/>
 
 <div align="center">
 
-### ⭐ Star this Repository!
-If KanbanCards helps keep your desktop organized and your workflow focused, please consider giving it a star! It helps more developers and creators discover the project.
-
-<br/>
+**Enjoying KanbanCards?** Please star this repository on GitHub to support ongoing development.
 
 [![GitHub Stars](https://img.shields.io/github/stars/danycli/KanbanCards?style=social)](https://github.com/danycli/KanbanCards)
-
-<br/>
-
-*Crafted with care to keep your workspace distraction-free and your mind focused.*
 
 </div>

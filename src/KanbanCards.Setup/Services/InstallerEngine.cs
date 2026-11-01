@@ -29,7 +29,7 @@ public static class InstallerEngine
     public const string AppExecutableName = "KanbanCards.exe";
     public const string UninstallerExecutableName = "uninstall.exe";
     public const string AppVersion = "1.3.0";
-    public const string Publisher = "Sahib";
+    public const string Publisher = "danycli";
     public const string RepositoryUrl = "https://github.com/danycli/KanbanCards";
 
     public static string GetDefaultInstallPath()
