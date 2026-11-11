@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace KanbanCards.Setup.Services;
@@ -28,7 +30,14 @@ public static class InstallerEngine
     public const string AppId = "KanbanCards";
     public const string AppExecutableName = "KanbanCards.exe";
     public const string UninstallerExecutableName = "uninstall.exe";
-    public const string AppVersion = "1.3.0";
+    public static string AppVersion
+    {
+        get
+        {
+            var version = typeof(InstallerEngine).Assembly.GetName().Version;
+            return version == null ? "0.0.0" : $"{version.Major}.{version.Minor}.{Math.Max(0, version.Build)}";
+        }
+    }
     public const string Publisher = "danycli";
     public const string RepositoryUrl = "https://github.com/danycli/KanbanCards";
 
@@ -54,6 +63,19 @@ public static class InstallerEngine
     {
         var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
         return Path.Combine(programs, $"{AppName}.lnk");
+    }
+
+    public static bool IsStartupEnabled()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+            return key?.GetValue(AppId) is string value && !string.IsNullOrWhiteSpace(value);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public static void StopRunningProcesses()
@@ -115,6 +137,7 @@ public static class InstallerEngine
 
             // Startup registration
             SetStartupRunKey(exePath, options.StartWithWindows);
+            PersistStartupPreference(options.StartWithWindows);
 
             // Windows Add/Remove Programs registration
             RegisterInAddRemovePrograms(installDir, exePath);
@@ -280,6 +303,36 @@ public static class InstallerEngine
             }
         }
         catch { }
+    }
+
+    private static void PersistStartupPreference(bool enabled)
+    {
+        var settingsPath = Path.Combine(GetUserDataPath(), "settings.json");
+        var temporaryPath = settingsPath + ".setup.tmp";
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+            JsonObject settings;
+            if (File.Exists(settingsPath))
+            {
+                if (JsonNode.Parse(File.ReadAllText(settingsPath)) is not JsonObject existingSettings)
+                    return;
+                settings = existingSettings;
+            }
+            else
+            {
+                settings = new JsonObject();
+            }
+
+            settings["StartWithWindows"] = enabled;
+            File.WriteAllText(temporaryPath, settings.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(temporaryPath, settingsPath, overwrite: true);
+        }
+        catch
+        {
+            try { if (File.Exists(temporaryPath)) File.Delete(temporaryPath); } catch { }
+            // The Windows Run entry remains the effective setting if the JSON file can't be updated.
+        }
     }
 
     private static void RegisterInAddRemovePrograms(string installDir, string exePath)

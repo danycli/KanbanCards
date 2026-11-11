@@ -42,11 +42,11 @@
                             <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.EditNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Note}" />
                         </Border.InputBindings>
                         <Grid ClipToBounds="True" IsHitTestVisible="False">
-                            <Canvas IsHitTestVisible="False">
+                                <Canvas IsHitTestVisible="False">
                                 <TextBlock x:Name="TitleText" Text="{Binding Note.DisplayTitle}" 
-                                           Canvas.Left="{Binding DataContext.TitleCanvasLeft, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                           Canvas.Left="{Binding TitleCanvasLeft}"
                                            Canvas.Top="12"
-                                           MaxWidth="230" TextTrimming="CharacterEllipsis"
+                                           MaxWidth="{Binding TitleMaxWidth}" TextTrimming="CharacterEllipsis"
                                            Foreground="#1F2937" FontWeight="SemiBold" Opacity="0"/>
                             </Canvas>
                         </Grid>

@@ -181,6 +181,7 @@ setup_debug.log
 *.pdb
 src/KanbanCards.Setup/app.zip
 Installer/Output/*.pdb
+Installer/Output/*/
 
 # Environment & Sensitive Keys
 .env

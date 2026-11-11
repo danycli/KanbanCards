@@ -1,7 +1,8 @@
 <Window x:Class="KanbanCards.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Kanban Cards" Height="640" Width="420"
+        xmlns:models="clr-namespace:KanbanCards.Models"
+        Title="Kanban Cards" Height="720" Width="1120" MinHeight="520" MinWidth="820"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip">
         
@@ -60,6 +61,11 @@
             <Grid Grid.Row="1" Margin="18,4,18,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
@@ -120,62 +126,153 @@
                 </Border>
                 
                 <!-- Add Note Button -->
-                <Button Grid.Column="1" Command="{Binding AddNoteCommand}" 
+                <ComboBox Grid.Column="1" Width="128" Height="38" Margin="10,0,0,0" VerticalContentAlignment="Center"
+                          Style="{StaticResource SoftComboBoxStyle}"
+                          Background="#F8F7FF" BorderBrush="#E7E3F4" BorderThickness="1" Padding="10,4" FontSize="11"
+                          SelectedValuePath="Tag" SelectedValue="{Binding PriorityFilter, Mode=TwoWay}"
+                          AutomationProperties.Name="Filter notes by priority" ToolTip="Filter by priority">
+                    <ComboBoxItem Content="All priorities" Tag="-1" IsSelected="True"/>
+                    <ComboBoxItem Content="Normal" Tag="0"/><ComboBoxItem Content="Important" Tag="1"/><ComboBoxItem Content="Urgent" Tag="2"/>
+                </ComboBox>
+                <ComboBox Grid.Column="2" Width="112" Height="38" Margin="8,0,0,0" VerticalContentAlignment="Center"
+                          Style="{StaticResource SoftComboBoxStyle}"
+                          Background="#F8F7FF" BorderBrush="#E7E3F4" BorderThickness="1" Padding="10,4" FontSize="11"
+                          SelectedValuePath="Tag" SelectedValue="{Binding DueFilter, Mode=TwoWay}"
+                          AutomationProperties.Name="Filter notes by due date" ToolTip="Filter by due date">
+                    <ComboBoxItem Content="Any due date" Tag="0" IsSelected="True"/><ComboBoxItem Content="Due today" Tag="1"/>
+                    <ComboBoxItem Content="Upcoming · 7 days" Tag="2"/><ComboBoxItem Content="Overdue" Tag="3"/>
+                </ComboBox>
+                <Button Grid.Column="3" Command="{Binding ToggleArchiveViewCommand}" Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="8,0,0,0" Padding="12,0" Content="{Binding ArchiveButtonText}" AutomationProperties.Name="Toggle archived notes"/>
+                <Button x:Name="DataMenuButton" Grid.Column="4" Command="{Binding ToggleDataMenuCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Padding="12,0"
+                        AutomationProperties.Name="Import, export, and restore data">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Data" VerticalAlignment="Center"/>
+                        <Path Data="M 0,1 L 4,5 L 8,1" Stroke="#64748B" StrokeThickness="1.4"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="8" Height="5" Margin="7,0,0,0"
+                              VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="5" Content="From template" Click="TemplatePicker_Click"
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Padding="11,0"
+                        ToolTip="Start a card from a reusable prompt" AutomationProperties.Name="Create a note from a template">
+                    <Button.ContextMenu>
+                        <ContextMenu Placement="Bottom" Style="{StaticResource ModernContextMenuStyle}"
+                                     ItemContainerStyle="{StaticResource ModernMenuItemStyle}">
+                            <MenuItem Header="Meeting notes" Tag="meeting" Click="TemplateMenu_Click"/>
+                            <MenuItem Header="Daily plan" Tag="daily" Click="TemplateMenu_Click"/>
+                            <MenuItem Header="Idea" Tag="idea" Click="TemplateMenu_Click"/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                <Button Grid.Column="6" Command="{Binding AddNoteCommand}"
                         Style="{StaticResource PrimaryButtonStyle}" Margin="12,0,0,0" Width="44" Height="44" Padding="0"
-                        ToolTip="Create a new note">
+                        ToolTip="Create a blank note" AutomationProperties.Name="Create a blank note">
                     <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE710;" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="Bold"/>
                 </Button>
+
+                <Popup x:Name="DataMenuPopup" Grid.Column="4" PlacementTarget="{Binding ElementName=DataMenuButton}"
+                       Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
+                       IsOpen="{Binding IsDataMenuOpen, Mode=TwoWay}" PopupAnimation="Fade">
+                    <Border Width="218" Background="#FFFEFF" BorderBrush="#E5E1F2" BorderThickness="1"
+                            CornerRadius="11" Padding="5" SnapsToDevicePixels="True">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#312E81" Opacity="0.12" ShadowDepth="4" BlurRadius="14" Direction="270"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <Button Style="{StaticResource DataMenuActionButtonStyle}" Click="ExportJson_Click">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8E5;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#6366F1" Width="22"/><TextBlock Text="Export as JSON"/></StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource DataMenuActionButtonStyle}" Click="ExportMarkdown_Click">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#6366F1" Width="22"/><TextBlock Text="Export as Markdown"/></StackPanel>
+                            </Button>
+                            <Border Height="1" Background="#EEEAF5" Margin="7,4"/>
+                            <Button Style="{StaticResource DataMenuActionButtonStyle}" Click="ImportJson_Click">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B5;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#6366F1" Width="22"/><TextBlock Text="Import JSON"/></StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource DataMenuActionButtonStyle}" Click="RestoreBackup_Click">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE777;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#6366F1" Width="22"/><TextBlock Text="Restore latest backup"/></StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource DataMenuActionButtonStyle}" Click="OpenBackupFolder_Click">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#6366F1" Width="22"/><TextBlock Text="Open backup folder"/></StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Popup>
             </Grid>
 
-            <!-- Notes List -->
-            <ListBox x:Name="NotesListBox" Grid.Row="2" ItemsSource="{Binding FilteredNotes}" Background="Transparent" BorderThickness="0"
-                     Margin="18,0,18,18" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <ContentPresenter/>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Setter Property="Margin" Value="0,0,0,10"/>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border x:Name="cardBorder" Background="White" CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand">
+            <Grid Grid.Row="2" Margin="18,0,18,18">
+                <Grid.Resources>
+                    <DataTemplate x:Key="KanbanCardTemplate">
+                        <Border x:Name="cardBorder" Background="White" CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1"
+                                Cursor="Hand" ToolTip="{Binding DataContext.ReorderHint, RelativeSource={RelativeSource AncestorType=Window}}" MouseLeftButtonUp="NoteCard_MouseLeftButtonUp">
                             <Border.Effect>
                                 <DropShadowEffect Color="#000000" Opacity="0.04" ShadowDepth="2" BlurRadius="6" Direction="270" />
                             </Border.Effect>
-                            <Border.InputBindings>
-                                <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.EditNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                            </Border.InputBindings>
-                            <Grid Margin="12,12,14,12">
+                            <Grid Margin="{Binding DataContext.CardContentMargin, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="5"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <!-- Left Color Indicator Bar -->
-                                <Border Grid.Column="0" Width="5" CornerRadius="2.5" Background="{Binding Color}" 
-                                        VerticalAlignment="Stretch" Margin="0,2,12,2"/>
-                                
-                                <!-- Title & Description -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="#0F172A" TextWrapping="Wrap" Margin="0,0,0,4"/>
-                                    <TextBlock Text="{Binding Description}" Foreground="#64748B" FontSize="13" TextWrapping="Wrap" MaxHeight="54" TextTrimming="CharacterEllipsis" LineHeight="18"/>
+                                <Border Grid.RowSpan="5" Grid.Column="0" CornerRadius="2.5" Background="{Binding Color}" Margin="0,2,10,2"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Foreground="#0F172A"
+                                           TextWrapping="Wrap" Margin="0,0,0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Description}" Foreground="#64748B" FontSize="12"
+                                           TextWrapping="Wrap" MaxHeight="54" TextTrimming="CharacterEllipsis" LineHeight="17"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding PriorityLabel}" Foreground="#6366F1" FontSize="10" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding DueLabel}" Foreground="#B45309" FontSize="10" Margin="8,0,0,0"/>
+                            <TextBlock Text="{Binding ChecklistSummary}" Foreground="#64748B" FontSize="10" Margin="8,0,0,0"/>
                                 </StackPanel>
-
-                                <!-- Date & Arrow -->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="8,2,0,0">
-                                    <TextBlock Text="{Binding FormattedDate}" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right"/>
-                                    <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE76C;" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                                </StackPanel>
+                                <Border Grid.Row="3" Grid.Column="1" Background="#F8FAFC" CornerRadius="6" Padding="6,3" Margin="0,5,0,0"
+                                        HorizontalAlignment="Left" MaxWidth="205" ToolTip="{Binding TagsLabel}"
+                                        Visibility="{Binding HasTags, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding TagsLabel}" Foreground="#64748B" FontSize="9" TextWrapping="Wrap" MaxHeight="28"/>
+                                </Border>
+                                <Grid Grid.Row="4" Grid.Column="1" Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" MinWidth="72" Height="29" HorizontalAlignment="Stretch" FontSize="10"
+                                              Style="{StaticResource LaneStatusComboBoxStyle}"
+                                              ItemsSource="{Binding DataContext.StatusOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              SelectionChanged="StatusCombo_SelectionChanged" Loaded="StatusCombo_Loaded"
+                                              ToolTip="Move this card to another lane"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding FormattedDate}" FontSize="10" Foreground="#94A3B8"
+                                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                    <Button Grid.Column="2" Width="48" Height="25" Margin="4,0,0,0" Background="Transparent" BorderThickness="0"
+                                            Foreground="#64748B" FontSize="9"
+                                            Command="{Binding DataContext.ToggleArchiveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}" AutomationProperties.Name="Archive or restore note">
+                                        <Button.Style><Style TargetType="Button"><Setter Property="Content" Value="Archive"/><Style.Triggers><DataTrigger Binding="{Binding IsArchived}" Value="True"><Setter Property="Content" Value="Restore"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                                    </Button>
+                                    <Button x:Name="PinButton" Grid.Column="3" Width="25" Height="25" Margin="4,0,0,0"
+                                            Background="Transparent" BorderThickness="0" Foreground="#94A3B8" FontSize="16"
+                                            Content="&#x2606;" ToolTip="Pin to the top"
+                                            AutomationProperties.Name="Pin card"
+                                            Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
                             </Grid>
                         </Border>
                         <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                <Setter TargetName="PinButton" Property="Content" Value="&#x2605;"/>
+                                <Setter TargetName="PinButton" Property="Foreground" Value="#F59E0B"/>
+                                <Setter TargetName="PinButton" Property="ToolTip" Value="Unpin from the top"/>
+                                <Setter TargetName="PinButton" Property="AutomationProperties.Name" Value="Unpin card"/>
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="cardBorder" Property="BorderBrush" Value="#C7D2FE"/>
                                 <Setter TargetName="cardBorder" Property="Effect">
@@ -186,28 +283,101 @@
                             </Trigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            
-            <!-- Empty State (No Notes Yet) -->
-            <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Border Width="56" Height="56" CornerRadius="28" Background="#EEF2FF" HorizontalAlignment="Center" Margin="0,0,0,16">
-                    <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE70B;" FontSize="24" Foreground="#6366F1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="No notes yet" FontSize="19" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" HorizontalAlignment="Center"/>
-                <TextBlock Text="Click the + button to create your first sticky card" Foreground="{StaticResource SecondaryText}" Margin="0,6,0,0" HorizontalAlignment="Center" FontSize="13"/>
-            </StackPanel>
+                    <Style x:Key="LaneListStyle" TargetType="ListBox">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+                        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                        <Setter Property="ItemTemplate" Value="{StaticResource KanbanCardTemplate}"/>
+                        <Setter Property="ItemContainerStyle">
+                            <Setter.Value>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Margin" Value="0,0,0,9"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                </Style>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                    <Style x:Key="LanePanelStyle" TargetType="Border">
+                        <Setter Property="Width" Value="250"/>
+                        <Setter Property="Margin" Value="0,0,12,0"/>
+                        <Setter Property="Padding" Value="10"/>
+                        <Setter Property="CornerRadius" Value="14"/>
+                        <Setter Property="Background" Value="#F1F5F9"/>
+                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                    </Style>
+                </Grid.Resources>
 
-            <!-- Search Empty State (No Matches) -->
-            <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Border Width="56" Height="56" CornerRadius="28" Background="#F1F5F9" HorizontalAlignment="Center" Margin="0,0,0,16">
-                    <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE721;" FontSize="22" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <ScrollViewer x:Name="BoardScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource LanePanelStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <DockPanel Margin="2,2,2,10">
+                                    <TextBlock Text="{Binding InboxCount}" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Inbox" Foreground="#0F172A" FontWeight="Bold" FontSize="14"/>
+                                </DockPanel>
+                                <ListBox x:Name="InboxListBox" Grid.Row="1" Tag="{x:Static models:NoteStatus.Inbox}" ItemsSource="{Binding InboxNotes}" Style="{StaticResource LaneListStyle}" AllowDrop="True" SelectionChanged="Lane_SelectionChanged" PreviewMouseLeftButtonDown="Lane_PreviewMouseLeftButtonDown" PreviewMouseMove="Lane_PreviewMouseMove" DragOver="Lane_DragOver" Drop="Lane_Drop"/>
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource LanePanelStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <DockPanel Margin="2,2,2,10">
+                                    <TextBlock Text="{Binding NextCount}" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Next" Foreground="#0F172A" FontWeight="Bold" FontSize="14"/>
+                                </DockPanel>
+                                <ListBox x:Name="NextListBox" Grid.Row="1" Tag="{x:Static models:NoteStatus.Next}" ItemsSource="{Binding NextNotes}" Style="{StaticResource LaneListStyle}" AllowDrop="True" SelectionChanged="Lane_SelectionChanged" PreviewMouseLeftButtonDown="Lane_PreviewMouseLeftButtonDown" PreviewMouseMove="Lane_PreviewMouseMove" DragOver="Lane_DragOver" Drop="Lane_Drop"/>
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource LanePanelStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <DockPanel Margin="2,2,2,10">
+                                    <TextBlock Text="{Binding DoingCount}" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Doing" Foreground="#0F172A" FontWeight="Bold" FontSize="14"/>
+                                </DockPanel>
+                                <ListBox x:Name="DoingListBox" Grid.Row="1" Tag="{x:Static models:NoteStatus.Doing}" ItemsSource="{Binding DoingNotes}" Style="{StaticResource LaneListStyle}" AllowDrop="True" SelectionChanged="Lane_SelectionChanged" PreviewMouseLeftButtonDown="Lane_PreviewMouseLeftButtonDown" PreviewMouseMove="Lane_PreviewMouseMove" DragOver="Lane_DragOver" Drop="Lane_Drop"/>
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource LanePanelStyle}" Margin="0">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <DockPanel Margin="2,2,2,10">
+                                    <TextBlock Text="{Binding DoneCount}" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Done" Foreground="#0F172A" FontWeight="Bold" FontSize="14"/>
+                                </DockPanel>
+                                <ListBox x:Name="DoneListBox" Grid.Row="1" Tag="{x:Static models:NoteStatus.Done}" ItemsSource="{Binding DoneNotes}" Style="{StaticResource LaneListStyle}" AllowDrop="True" SelectionChanged="Lane_SelectionChanged" PreviewMouseLeftButtonDown="Lane_PreviewMouseLeftButtonDown" PreviewMouseMove="Lane_PreviewMouseMove" DragOver="Lane_DragOver" Drop="Lane_Drop"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Background="#F8FAFC" CornerRadius="12" Panel.ZIndex="2">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEmpty}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                <DataTrigger Binding="{Binding IsSearchEmpty}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="56" Height="56" CornerRadius="28" Background="#EEF2FF" HorizontalAlignment="Center" Margin="0,0,0,16">
+                            <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE70B;" FontSize="24" Foreground="#6366F1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="{Binding EmptyTitle}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding EmptyMessage}" Foreground="{StaticResource SecondaryText}" Margin="0,6,0,0" HorizontalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
                 </Border>
-                <TextBlock Text="No notes found" FontSize="19" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" HorizontalAlignment="Center"/>
-                <TextBlock Text="Try searching for another keyword" Foreground="{StaticResource SecondaryText}" Margin="0,6,0,0" HorizontalAlignment="Center" FontSize="13"/>
-            </StackPanel>
+            </Grid>
 
             <!-- Modal Backdrop Overlay (Dimmer) -->
             <Border x:Name="ModalDimmer" Grid.Row="0" Grid.RowSpan="3"

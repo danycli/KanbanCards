@@ -22,7 +22,8 @@ public class MockNoteService : INoteService
 
     public Task<List<Note>> GetAllNotesAsync()
     {
-        return Task.FromResult(_notes.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id).ToList());
+        return Task.FromResult(_notes.OrderByDescending(n => n.IsPinned).ThenBy(n => n.SortOrder)
+            .ThenByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id).ToList());
     }
 
     public Task<Note?> GetNoteAsync(int id) => Task.FromResult(_notes.FirstOrDefault(n => n.Id == id));
@@ -35,6 +36,15 @@ public class MockNoteService : INoteService
         return Task.FromResult(note);
     }
 
+    public Task<Note> ImportNoteAsync(Note note) => CreateNoteAsync(note);
+
+    public Task ImportNotesAsync(IReadOnlyCollection<Note> notes)
+    {
+        foreach (var note in notes)
+            CreateNoteAsync(note);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateNoteAsync(Note note)
     {
         var existing = _notes.FirstOrDefault(n => n.Id == note.Id);
@@ -43,6 +53,55 @@ public class MockNoteService : INoteService
             existing.Title = note.Title;
             existing.Description = note.Description;
             existing.Color = note.Color;
+            existing.Priority = note.Priority;
+            var reminderScheduleChanged = existing.DueAt != note.DueAt || existing.ReminderEnabled != note.ReminderEnabled;
+            existing.DueAt = note.DueAt;
+            existing.ReminderEnabled = note.ReminderEnabled;
+            if (reminderScheduleChanged)
+            {
+                existing.ReminderSentAt = null;
+                existing.ReminderSnoozedUntil = null;
+            }
+            existing.TagsJson = note.TagsJson;
+            existing.ChecklistJson = note.ChecklistJson;
+        }
+        NotesChanged?.Invoke();
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateNoteStatusAsync(int id, NoteStatus status)
+    {
+        var existing = _notes.FirstOrDefault(n => n.Id == id);
+        if (existing != null)
+            existing.Status = status;
+        NotesChanged?.Invoke();
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateNotePinAsync(int id, bool isPinned)
+    {
+        var existing = _notes.FirstOrDefault(n => n.Id == id);
+        if (existing != null)
+            existing.IsPinned = isPinned;
+        NotesChanged?.Invoke();
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateNoteArchiveAsync(int id, bool archived)
+    {
+        var existing = _notes.FirstOrDefault(n => n.Id == id);
+        if (existing != null) existing.ArchivedAt = archived ? DateTime.UtcNow : null;
+        NotesChanged?.Invoke();
+        return Task.CompletedTask;
+    }
+
+    public Task ReorderNotesAsync(NoteStatus status, IReadOnlyList<int> orderedNoteIds)
+    {
+        for (var index = 0; index < orderedNoteIds.Count; index++)
+        {
+            var existing = _notes.FirstOrDefault(n => n.Id == orderedNoteIds[index] && n.Status == status);
+            if (existing != null)
+                existing.SortOrder = index;
         }
         NotesChanged?.Invoke();
         return Task.CompletedTask;
@@ -317,6 +376,31 @@ public class MotionAndStackTests
         {
             Assert.Equal(i, vm.VisibleNotes[i].SlotIndex);
             Assert.Equal(100 - i, vm.VisibleNotes[i].ZIndex);
+        }
+    }
+
+    [Fact]
+    public async Task EdgeStackViewModel_LeftDock_KeepsExpandedTitlesInsideTheVisibleCardArea()
+    {
+        var noteService = new MockNoteService();
+        var settingsService = new MockSettingsService();
+        settingsService.Settings.StackPosition = "Left";
+        noteService.SetNotes(Enumerable.Range(1, 10).Select(i => new Note
+        {
+            Id = i,
+            Title = $"Left note {i}",
+            CreatedAt = DateTime.UtcNow.AddMinutes(i)
+        }));
+
+        var vm = new EdgeStackViewModel(noteService, new MockEditorService(), settingsService);
+        await vm.LoadNotesAsync();
+
+        for (int i = 0; i < vm.VisibleNotes.Count; i++)
+        {
+            var item = vm.VisibleNotes[i];
+            Assert.Equal(20 + (16 * i), item.TitleCanvasLeft);
+            Assert.Equal(260 - (16 * i), item.TitleMaxWidth);
+            Assert.Equal(280, item.TitleCanvasLeft + item.TitleMaxWidth);
         }
     }
 

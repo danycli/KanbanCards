@@ -60,6 +60,24 @@ public class SettingsViewModel : ViewModelBase
         set { _settings.AutoCheckForUpdates = value; Save(); OnPropertyChanged(); }
     }
 
+    public bool EnableReminders
+    {
+        get => _settings.EnableReminders;
+        set { _settings.EnableReminders = value; Save(); OnPropertyChanged(); }
+    }
+
+    public int EditorFontSize
+    {
+        get => _settings.EditorFontSize;
+        set { _settings.EditorFontSize = Math.Clamp(value, 13, 22); Save(); OnPropertyChanged(); }
+    }
+
+    public bool CompactBoard
+    {
+        get => _settings.CompactBoard;
+        set { _settings.CompactBoard = value; Save(); OnPropertyChanged(); }
+    }
+
     public string UpdateStatusText
     {
         get => _updateStatusText;

@@ -86,7 +86,7 @@ public class EditorService : IEditorService
         // 3. Open a new editor instance
         var noteService = _serviceProvider.GetRequiredService<INoteService>();
         var settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
-        var viewModel = new NoteEditorViewModel(noteService, note, isNew);
+        var viewModel = new NoteEditorViewModel(noteService, note, isNew, _serviceProvider.GetRequiredService<ISettingsService>());
         var window = _windowFactory != null ? _windowFactory(viewModel) : new NoteEditorWindow(viewModel);
 
         var settings = settingsService.LoadSettings();

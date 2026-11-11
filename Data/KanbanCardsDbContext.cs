@@ -1,5 +1,6 @@
 using KanbanCards.Models;
 using Microsoft.EntityFrameworkCore;
+using KanbanCards.Services;
 using System;
 using System.IO;
 
@@ -13,16 +14,12 @@ public class KanbanCardsDbContext : DbContext
 
     public KanbanCardsDbContext()
     {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "KanbanCards", "kanbancards.db");
+        DbPath = Path.Join(ApplicationDataPaths.DataDirectory, "kanbancards.db");
     }
     
     public KanbanCardsDbContext(DbContextOptions<KanbanCardsDbContext> options) : base(options)
     {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "KanbanCards", "kanbancards.db");
+        DbPath = Path.Join(ApplicationDataPaths.DataDirectory, "kanbancards.db");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
@@ -47,8 +44,16 @@ public class KanbanCardsDbContext : DbContext
 
         modelBuilder.Entity<Note>(entity =>
         {
+            entity.Property(n => n.Status).HasDefaultValue(NoteStatus.Inbox);
+            entity.Property(n => n.SortOrder).HasDefaultValue(0);
+            entity.Property(n => n.IsPinned).HasDefaultValue(false);
+            entity.Property(n => n.Priority).HasDefaultValue(0);
+            entity.Property(n => n.TagsJson).HasDefaultValue("[]");
+            entity.Property(n => n.ChecklistJson).HasDefaultValue("[]");
+            entity.Property(n => n.ReminderEnabled).HasDefaultValue(false);
             entity.HasIndex(n => n.CreatedAt)
                   .HasDatabaseName("IX_Notes_CreatedAt");
+            entity.HasIndex(n => n.DueAt).HasDatabaseName("IX_Notes_DueAt");
         });
     }
 }

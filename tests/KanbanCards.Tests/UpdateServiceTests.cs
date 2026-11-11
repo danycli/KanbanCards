@@ -249,16 +249,16 @@ public class UpdateServiceTests
 
         var updateInfo = new UpdateInfo
         {
-            Version = "1.5.0",
-            TagName = "v1.5.0",
-            HtmlUrl = "https://github.com/danycli/KanbanCards/releases/tag/v1.5.0",
+            Version = "1.4.0",
+            TagName = "v1.4.0",
+            HtmlUrl = "https://github.com/danycli/KanbanCards/releases/tag/v1.4.0",
             Summary = new[] { "Improved UI responsiveness", "Fixed drag stutter" },
             IsInstalled = true
         };
 
         var vm = new UpdateNoticeViewModel(updateService, updateInfo);
 
-        Assert.Equal("v1.5.0", vm.Version);
+        Assert.Equal("v1.4.0", vm.Version);
         Assert.Equal(2, vm.Changes.Count);
         Assert.Equal("Update", vm.PrimaryButtonText);
         Assert.True(vm.CanInteract);
@@ -271,7 +271,7 @@ public class UpdateServiceTests
         vm.DismissCommand.Execute(null);
 
         Assert.True(closeRequested);
-        Assert.Equal("1.5.0", settingsService.Settings.LastDismissedUpdateVersion);
+        Assert.Equal("1.4.0", settingsService.Settings.LastDismissedUpdateVersion);
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public class UpdateServiceTests
 
         var updateInfo = new UpdateInfo
         {
-            Version = "1.5.0",
+            Version = "1.4.0",
             IsInstalled = false
         };
 

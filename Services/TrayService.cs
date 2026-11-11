@@ -83,6 +83,9 @@ public class TrayService : ITrayService
             _serviceProvider.GetRequiredService<IEditorService>().OpenEditor(new Models.Note(), true);
         });
 
+        var captureClipboardItem = CreateMenuItem("Capture Clipboard", "\uE8C8", "#8B5CF6", (s, e) => CaptureClipboard());
+        var templatesItem = CreateMenuItem("New from Template", "\uE8A5", "#0EA5E9", (s, e) => OpenTemplate("idea"));
+
         // View Notes
         var viewNotesItem = CreateMenuItem("View Notes", "\uE8F1", "#3B82F6", (s, e) =>
         {
@@ -120,6 +123,8 @@ public class TrayService : ITrayService
         });
 
         menu.Items.Add(addNoteItem);
+        menu.Items.Add(captureClipboardItem);
+        menu.Items.Add(templatesItem);
         menu.Items.Add(viewNotesItem);
         menu.Items.Add(settingsItem);
         menu.Items.Add(updateItem);
@@ -137,6 +142,37 @@ public class TrayService : ITrayService
         {
             FullScreenMonitorService.LogAudit($"[TRAY WARNING] ForceCreate non-fatal error: {ex.Message}");
         }
+    }
+
+    private void OpenTemplate(string templateId) =>
+        _serviceProvider.GetRequiredService<IEditorService>().OpenEditor(NoteTemplateFactory.Create(templateId), true);
+
+    private void CaptureClipboard()
+    {
+        try
+        {
+            if (!System.Windows.Clipboard.ContainsText())
+            {
+                System.Windows.MessageBox.Show("There is no text in the clipboard yet.", "Kanban Cards", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
+            var text = System.Windows.Clipboard.GetText(System.Windows.TextDataFormat.UnicodeText);
+            if (string.IsNullOrWhiteSpace(text)) return;
+            if (text.Length > 20000)
+            {
+                var answer = System.Windows.MessageBox.Show("This text is long. Capture the first 20,000 characters?", "Kanban Cards", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question);
+                if (answer != System.Windows.MessageBoxResult.Yes) return;
+                text = text[..20000];
+            }
+            var lines = text.Replace("\r\n", "\n").Split('\n');
+            var first = Array.FindIndex(lines, line => !string.IsNullOrWhiteSpace(line));
+            if (first < 0) return;
+            var title = lines[first].Trim();
+            var description = string.Join(Environment.NewLine, lines.Skip(first + 1)).Trim();
+            if (title.Length > 100) { description = title[100..] + Environment.NewLine + description; title = title[..100]; }
+            _serviceProvider.GetRequiredService<IEditorService>().OpenEditor(new Models.Note { Title = title, Description = description }, true);
+        }
+        catch (Exception ex) { FullScreenMonitorService.LogAudit($"[CLIPBOARD CAPTURE] {ex.Message}"); }
     }
 
     private MenuItem CreateMenuItem(string title, string glyph, string iconColorHex, RoutedEventHandler onClick)

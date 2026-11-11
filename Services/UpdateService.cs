@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using KanbanCards.Models;
@@ -25,7 +26,6 @@ public class UpdateService : IUpdateService, IDisposable
     private const string GitHubRepo = "KanbanCards";
     public const string DefaultRepositoryUrl = $"https://github.com/{GitHubOwner}/{GitHubRepo}";
     public const string LatestReleaseApiUrl = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
-    private const string InstallerArguments = "/SILENT /NORESTART";
     private const int Win32ErrorCancelled = 1223; // User declined UAC prompt
     private static readonly TimeSpan StallTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan PeriodicInterval = TimeSpan.FromHours(6);
@@ -118,7 +118,7 @@ public class UpdateService : IUpdateService, IDisposable
         }
         catch { }
 
-        return "1.3.0";
+        return "0.0.0";
     }
 
     public void StartBackgroundChecks()
@@ -477,10 +477,17 @@ public class UpdateService : IUpdateService, IDisposable
             // 5. Execute installer
             SetState(UpdateStep.Installing, 100, "Launching installer...");
 
-            var psi = new ProcessStartInfo(targetFile, InstallerArguments)
+            var installedAppPath = GetInstalledAppExecutablePath();
+            var installedDirectory = Path.GetDirectoryName(installedAppPath);
+            var psi = new ProcessStartInfo(targetFile, "/SILENT /NORESTART")
             {
                 UseShellExecute = true
             };
+            if (string.Equals(Path.GetFileName(installedAppPath), "KanbanCards.exe", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(installedDirectory))
+            {
+                psi.Arguments += $" /DIR=\"{installedDirectory}\"";
+            }
 
             Process? setupProcess;
             try
@@ -500,8 +507,6 @@ public class UpdateService : IUpdateService, IDisposable
 
             if (setupProcess != null)
             {
-                // Inno Setup's PrepareToInstall script automatically shuts down KanbanCards.exe,
-                // upgrades the files, and completes cleanly.
                 SetState(UpdateStep.Idle, 0, "Installer running.");
                 FullScreenMonitorService.LogAudit("[UPDATE SERVICE] Installer launched successfully. Initiating clean application shutdown...");
 
@@ -509,18 +514,22 @@ public class UpdateService : IUpdateService, IDisposable
                 // immediately after the installer process finishes.
                 try
                 {
-                    var targetExe = GetInstalledAppExecutablePath();
-                    var watcherScript = $"Wait-Process -Id {setupProcess.Id}; Start-Sleep -Seconds 1; if (-not (Get-Process KanbanCards -ErrorAction SilentlyContinue)) {{ Start-Process '{targetExe}' }}";
+                    var escapedTargetExe = installedAppPath.Replace("'", "''", StringComparison.Ordinal);
+                    var watcherScript = "$setup = Get-Process -Id " + setupProcess.Id + " -ErrorAction SilentlyContinue; " +
+                                        "if ($setup) { $setup.WaitForExit() }; " +
+                                        "if ($setup -and $setup.ExitCode -eq 0) { Start-Sleep -Seconds 1; " +
+                                        "if (-not (Get-Process KanbanCards -ErrorAction SilentlyContinue)) { Start-Process -FilePath '" + escapedTargetExe + "' } }";
+                    var encodedWatcherScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(watcherScript));
                     var watcherPsi = new ProcessStartInfo
                     {
                         FileName = "powershell.exe",
-                        Arguments = $"-NoProfile -WindowStyle Hidden -Command \"{watcherScript}\"",
+                        Arguments = $"-NoProfile -WindowStyle Hidden -EncodedCommand {encodedWatcherScript}",
                         CreateNoWindow = true,
                         UseShellExecute = false,
                         WindowStyle = ProcessWindowStyle.Hidden
                     };
                     Process.Start(watcherPsi);
-                    FullScreenMonitorService.LogAudit($"[UPDATE SERVICE] Auto-relaunch watcher scheduled for '{targetExe}' once PID {setupProcess.Id} exits.");
+                    FullScreenMonitorService.LogAudit($"[UPDATE SERVICE] Auto-relaunch watcher scheduled for '{installedAppPath}' once PID {setupProcess.Id} exits.");
                 }
                 catch (Exception ex)
                 {

@@ -1,7 +1,10 @@
 $ErrorActionPreference = "Stop"
 
 $InstallerDir = $PSScriptRoot
-$OutputDir = Join-Path $InstallerDir "Output"
+$RepoRoot = Split-Path $InstallerDir -Parent
+[xml]$versionProps = Get-Content (Join-Path $RepoRoot "Directory.Build.props")
+$releaseVersion = $versionProps.Project.PropertyGroup.Version
+$OutputDir = Join-Path (Join-Path $InstallerDir "Output") $releaseVersion
 $SetupExe = Join-Path $OutputDir "KanbanCardsSetup.exe"
 $ChecksumFile = Join-Path $OutputDir "SHA256SUMS"
 

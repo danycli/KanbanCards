@@ -6,7 +6,7 @@ This directory contains the packaging tooling and build scripts for the **Kanban
 
 ## Overview
 
-KanbanCards features a native Windows setup application designed to match the clean card aesthetic of the main application. It requires zero administrative privileges (no UAC prompts), installs per-user, and acts as both the installation wizard and the clean uninstaller.
+The supported release path is the native Windows setup application produced by `build.ps1`. It installs per-user and acts as both the installation wizard and the clean uninstaller. The in-app updater downloads this same setup bundle and runs it silently against the existing install directory.
 
 ### Key Characteristics
 - **Zero-UAC Deployment**: Installs to `%LocalAppData%\Programs\KanbanCards` by default, eliminating security barriers and enterprise privilege issues.
@@ -34,13 +34,13 @@ The installer and uninstaller support automated, unattended deployments:
 
 ```
 Installer/
-├── build.ps1               # Builds the modern native setup bundle (KanbanCardsSetup.exe)
-├── verify.ps1              # Validates installer hash against SHA256SUMS
-├── KanbanCards.iss         # Alternative Inno Setup configuration (for traditional MSI/EXE packaging)
+├── build.ps1               # Builds the modern native setup bundle
+├── verify.ps1              # Validates the versioned installer hash
+├── KanbanCards.iss         # Legacy Inno Setup recipe
 ├── README.md               # Installer documentation
-└── Output/
-    ├── KanbanCardsSetup.exe# Compiled native setup & uninstaller executable
-    └── SHA256SUMS          # SHA-256 integrity checksum
+└── Output/<version>/
+    ├── KanbanCardsSetup.exe # Compiled native setup & uninstaller executable
+    └── SHA256SUMS           # SHA-256 integrity checksum
 ```
 
 ---
@@ -72,6 +72,6 @@ powershell -ExecutionPolicy Bypass -File .\Installer\verify.ps1
 
 ---
 
-## Alternative: Inno Setup
+## Legacy alternative: Inno Setup
 
-For legacy enterprise environments requiring traditional Inno Setup packaging, `KanbanCards.iss` is also maintained and compatible with Inno Setup 6+.
+`KanbanCards.iss` is retained as a legacy packaging recipe. It is not used by the supported build or in-app update flow; release changes should be validated against the native setup bundle built by `build.ps1`.

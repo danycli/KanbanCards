@@ -25,6 +25,10 @@ public interface INoteEditorWindow
 
 public partial class NoteEditorWindow : Window, INoteEditorWindow
 {
+    private bool _allowCloseAfterSave;
+    private bool _closePending;
+    private bool _isClosed;
+
     public NoteEditorViewModel ViewModel { get; }
 
     public NoteEditorWindow(NoteEditorViewModel viewModel) : this(viewModel, true)
@@ -60,15 +64,31 @@ public partial class NoteEditorWindow : Window, INoteEditorWindow
 
     protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (!ViewModel.IsNew)
+        if (_allowCloseAfterSave || ViewModel.IsNew)
         {
-            await ViewModel.FlushAutosaveAsync();
+            base.OnClosing(e);
+            return;
         }
-        base.OnClosing(e);
+
+        e.Cancel = true;
+        if (_closePending) return;
+        _closePending = true;
+        bool saved;
+        try { saved = await ViewModel.FlushAutosaveAsync(); }
+        finally { _closePending = false; }
+        if (!saved) return;
+
+        _allowCloseAfterSave = true;
+        _ = Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!_isClosed && IsVisible)
+                Close();
+        }), System.Windows.Threading.DispatcherPriority.Background);
     }
 
     protected override void OnClosed(EventArgs e)
     {
+        _isClosed = true;
         ViewModel.Dispose();
         base.OnClosed(e);
     }

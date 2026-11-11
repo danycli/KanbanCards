@@ -49,7 +49,7 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="Kanban Cards" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"/>
                             <Border Background="#E0E7FF" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="v1.3.0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}"/>
+                                <TextBlock x:Name="VersionText" Text="v1.4.0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}"/>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Fast, minimal sticky note cards docked to your screen edge" FontSize="12.5" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,4,0,0" HorizontalAlignment="Center"/>

@@ -21,13 +21,13 @@ Collapsed into an orderly staircase until you need it, fluid when you touch it, 
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-9C27B0?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![WPF XAML](https://img.shields.io/badge/UI-WPF%20XAML-4CAF50?style=flat-square)](https://github.com/dotnet/wpf)
 [![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL-FF9800?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org/)
-[![Release v1.3.0](https://img.shields.io/badge/Release-v1.3.0-F44336?style=flat-square)](https://github.com/danycli/KanbanCards/releases/latest)
-[![Tests Passing](https://img.shields.io/badge/Tests-94%20Passing-22C55E?style=flat-square)](tests/KanbanCards.Tests)
+[![Release v1.4.0](https://img.shields.io/badge/Release-v1.4.0-F44336?style=flat-square)](https://github.com/danycli/KanbanCards/releases/latest)
+[![Tests Passing](https://img.shields.io/badge/Tests-109%20Passing-22C55E?style=flat-square)](tests/KanbanCards.Tests)
 [![License MIT](https://img.shields.io/badge/License-MIT-607D8B?style=flat-square)](LICENSE)
 
 <br/>
 
-[**Download v1.3.0 Setup**](https://github.com/danycli/KanbanCards/releases/latest) &nbsp;&bull;&nbsp; [The Visual Experience](#the-visual-experience) &nbsp;&bull;&nbsp; [Bento Showcase](#bento-product-showcase) &nbsp;&bull;&nbsp; [Color System](#color-design-system) &nbsp;&bull;&nbsp; [Engineering](#engineering-highlights) &nbsp;&bull;&nbsp; [Shortcuts](#keyboard-shortcuts) &nbsp;&bull;&nbsp; [Architecture](#system-architecture)
+[**Download v1.4.0 Setup**](https://github.com/danycli/KanbanCards/releases/latest) &nbsp;&bull;&nbsp; [The Visual Experience](#the-visual-experience) &nbsp;&bull;&nbsp; [Bento Showcase](#bento-product-showcase) &nbsp;&bull;&nbsp; [Color System](#color-design-system) &nbsp;&bull;&nbsp; [Engineering](#engineering-highlights) &nbsp;&bull;&nbsp; [Shortcuts](#keyboard-shortcuts) &nbsp;&bull;&nbsp; [Architecture](#system-architecture)
 
 ---
 
@@ -86,7 +86,7 @@ Traditional sticky notes clutter your workspace, get buried behind browser tabs,
 
 ## Bento Product Showcase
 
-Explore the three core pillars of KanbanCards: the comprehensive Kanban Board, the distraction-free Card Editor, and the Fluent Preferences system.
+Explore the three core pillars of KanbanCards: the four-lane workflow board, the distraction-free Card Editor, and the Fluent Preferences system.
 
 <table>
   <tr>
@@ -94,7 +94,7 @@ Explore the three core pillars of KanbanCards: the comprehensive Kanban Board, t
       <br/>
       <span style="font-size: 14px; font-weight: 700; color: #6366F1;">03. YOUR WORKSPACE, ORGANIZED</span>
       <h3>The Companion Kanban Board</h3>
-      <p align="left">Whenever you need a broader perspective across your thoughts, open the main Kanban Cards board. Features real-time 150ms debounced search, relative timestamps (<i>"10:51 PM"</i>, <i>"Oct 23"</i>), and instant color indicators.</p>
+      <p align="left">Whenever you need a broader perspective across your work, open the main Kanban Cards board. Move cards through Inbox, Next, Doing, and Done; search remains global across all lanes. Pin cards, reorder them, filter by priority or due date, and archive reference cards without removing them from the app.</p>
       <a href="assets/readme/main-board.png">
         <img src="assets/readme/main-board.png" alt="Kanban Cards Main Board Window" width="370" />
       </a>
@@ -104,7 +104,7 @@ Explore the three core pillars of KanbanCards: the comprehensive Kanban Board, t
       <br/>
       <span style="font-size: 14px; font-weight: 700; color: #EC4899;">04. DISTRACTION-FREE EDITING</span>
       <h3>Frameless Note Editor</h3>
-      <p align="left">Floating, draggable card editor with non-colliding radio swatches and clean typography.</p>
+      <p align="left">Floating, draggable card editor with pastel colors, quiet priority and due-date controls, editable checklist rows, and lightweight tags. The title and free-form description remain fast to edit.</p>
       <a href="assets/readme/note-editor.png">
         <img src="assets/readme/note-editor.png" alt="Kanban Cards Note Editor" width="260" />
       </a>
@@ -188,7 +188,8 @@ Behind its gentle pastel aesthetic, KanbanCards is engineered for high performan
 
 | Shortcut | Scope | Function |
 | :--- | :--- | :--- |
-| <kbd>Ctrl</kbd> + <kbd>N</kbd> | Global / Board | Create a new sticky note |
+| <kbd>Ctrl</kbd> + <kbd>N</kbd> | Board | Create a new sticky note |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> | Global | Open quick capture without raising the board |
 | <kbd>Ctrl</kbd> + <kbd>F</kbd> | Main Board | Focus search input and select existing query |
 | <kbd>Enter</kbd> | Main Board | Open selected note in editor |
 | <kbd>Delete</kbd> | Main Board | Prompt confirmation dialog to delete selected note |

@@ -76,6 +76,7 @@ public partial class App : Application
         if (isSilent)
         {
             var logPath = Path.Combine(Path.GetTempPath(), "kanban_setup_debug.log");
+            var exitCode = 0;
             try
             {
                 File.AppendAllText(logPath, $"[SILENT START] args={string.Join(" ", args)}, isUninstall={isUninstall}, targetInstallDir={targetInstallDir}\n");
@@ -88,7 +89,14 @@ public partial class App : Application
                     var options = new InstallOptions
                     {
                         InstallPath = targetInstallDir,
-                        LaunchAfterInstall = !noLaunch
+                        LaunchAfterInstall = !noLaunch,
+                        StartWithWindows = File.Exists(Path.Combine(targetInstallDir, InstallerEngine.AppExecutableName))
+                            ? InstallerEngine.IsStartupEnabled()
+                            : true,
+                        CreateDesktopShortcut = !File.Exists(Path.Combine(targetInstallDir, InstallerEngine.AppExecutableName)) ||
+                            File.Exists(InstallerEngine.GetDesktopShortcutPath()),
+                        CreateStartMenuShortcut = !File.Exists(Path.Combine(targetInstallDir, InstallerEngine.AppExecutableName)) ||
+                            File.Exists(InstallerEngine.GetStartMenuShortcutPath())
                     };
                     await InstallerEngine.InstallAsync(options);
                     File.AppendAllText(logPath, "[SILENT INSTALL FINISHED]\n");
@@ -105,10 +113,11 @@ public partial class App : Application
             catch (Exception ex)
             {
                 File.AppendAllText(logPath, $"[SILENT ERROR] {ex}\n");
+                exitCode = 1;
             }
             finally
             {
-                Shutdown(0);
+                Shutdown(exitCode);
             }
 
             return;

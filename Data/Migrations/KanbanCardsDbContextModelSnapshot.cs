@@ -23,11 +23,22 @@ namespace KanbanCards.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("ArchivedAt").HasColumnType("TEXT");
+
+                    b.Property<string>("ChecklistJson").IsRequired().HasColumnType("TEXT").HasDefaultValue("[]");
+
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DueAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -38,10 +49,31 @@ namespace KanbanCards.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Priority").HasColumnType("INTEGER").HasDefaultValue(0);
+                    b.Property<DateTime?>("ReminderSentAt").HasColumnType("TEXT");
+                    b.Property<bool>("ReminderEnabled").HasColumnType("INTEGER").HasDefaultValue(false);
+                    b.Property<DateTime?>("ReminderSnoozedUntil").HasColumnType("TEXT");
+                    b.Property<string>("TagsJson")
+                        .IsRequired().HasColumnType("TEXT").HasDefaultValue("[]");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DueAt")
+                        .HasDatabaseName("IX_Notes_DueAt");
 
                     b.ToTable("Notes");
                 });

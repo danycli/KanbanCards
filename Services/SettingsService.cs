@@ -13,6 +13,9 @@ public class AppSettings
     public int AnimationSpeed { get; set; } = 50; // 0-100
     public string StackPosition { get; set; } = "Right";
     public bool AutoCheckForUpdates { get; set; } = true;
+    public bool EnableReminders { get; set; } = true;
+    public int EditorFontSize { get; set; } = 15;
+    public bool CompactBoard { get; set; }
     public string? LastDismissedUpdateVersion { get; set; } = null;
     public DateTime? LastUpdateCheckTime { get; set; } = null;
 }
@@ -32,8 +35,7 @@ public class SettingsService : ISettingsService
     public event Action? SettingsChanged;
 
     public SettingsService() : this(Path.Join(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
-        "KanbanCards", "settings.json"))
+        ApplicationDataPaths.DataDirectory, "settings.json"))
     {
     }
 

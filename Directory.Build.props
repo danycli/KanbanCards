@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Single release version source for the app, tests, and embedded setup host. -->
+    <Version>1.4.0</Version>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <FileVersion>1.4.0.0</FileVersion>
+  </PropertyGroup>
+</Project>

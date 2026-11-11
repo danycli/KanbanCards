@@ -12,7 +12,9 @@ $RepoRoot = $PSScriptRoot
 $PublishDir = Join-Path $RepoRoot "bin\Release\net8.0-windows\win-x64\publish"
 $SetupProjectDir = Join-Path $RepoRoot "src\KanbanCards.Setup"
 $AppZipPath = Join-Path $SetupProjectDir "app.zip"
-$OutputDir = Join-Path $RepoRoot "Installer\Output"
+[xml]$versionProps = Get-Content (Join-Path $RepoRoot "Directory.Build.props")
+$releaseVersion = $versionProps.Project.PropertyGroup.Version
+$OutputDir = Join-Path (Join-Path $RepoRoot "Installer\Output") $releaseVersion
 
 # 1. Publish main application
 Write-Host "[1/5] Publishing main application (Release/win-x64)..." -ForegroundColor Yellow

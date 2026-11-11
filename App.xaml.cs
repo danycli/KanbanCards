@@ -6,6 +6,7 @@ using KanbanCards.Services;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
 using System;
+using System.Linq;
 
 namespace KanbanCards;
 
@@ -14,6 +15,7 @@ public partial class App : Application
     public static bool IsShuttingDown { get; set; } = false;
     private IHost _host;
     private ISingleInstanceService? _singleInstanceService;
+    private QuickCaptureHotkeyService? _quickCaptureHotkey;
 
     public App()
     {
@@ -40,6 +42,8 @@ public partial class App : Application
             {
                 services.AddDbContextFactory<KanbanCardsDbContext>();
                 services.AddSingleton<INoteService, NoteService>();
+                services.AddSingleton<IReminderService, ReminderService>();
+                services.AddSingleton<QuickCaptureHotkeyService>();
                 services.AddSingleton<IEditorService, EditorService>();
                 services.AddSingleton<ISettingsService, SettingsService>();
                 services.AddSingleton<IStartupService, StartupService>();
@@ -93,6 +97,13 @@ public partial class App : Application
             var contextFactory = _host.Services.GetRequiredService<IDbContextFactory<KanbanCardsDbContext>>();
             using (var dbContext = contextFactory.CreateDbContext())
             {
+                var databaseAlreadyExisted = File.Exists(dbContext.DbPath);
+                var hasPendingMigrations = dbContext.Database.GetPendingMigrations().Any();
+                if (databaseAlreadyExisted && hasPendingMigrations)
+                {
+                    var backupPath = DatabaseBackupService.CreatePreMigrationBackup(dbContext.DbPath);
+                    FullScreenMonitorService.LogAudit($"[DATABASE BACKUP] Pre-migration snapshot created at '{backupPath}'.");
+                }
                 dbContext.Database.Migrate();
                 try
                 {
@@ -107,9 +118,12 @@ public partial class App : Application
 
             var trayService = _host.Services.GetRequiredService<ITrayService>();
             trayService.Initialize();
+            _quickCaptureHotkey = _host.Services.GetRequiredService<QuickCaptureHotkeyService>();
+            _quickCaptureHotkey.Start();
 
             var settingsService = _host.Services.GetRequiredService<ISettingsService>();
             var settings = settingsService.LoadSettings();
+            _host.Services.GetRequiredService<IReminderService>().Start();
 
             var edgeStack = _host.Services.GetRequiredService<Views.EdgeStackWindow>();
             if (settings.ShowNotesOnDesktop && !fullScreenMonitor.IsFullScreenActive)
@@ -142,6 +156,8 @@ public partial class App : Application
         IsShuttingDown = true;
         _singleInstanceService?.Dispose();
         _singleInstanceService = null;
+        _quickCaptureHotkey?.Dispose();
+        _quickCaptureHotkey = null;
 
         var fullScreenMonitor = _host.Services.GetService<IFullScreenMonitorService>();
         fullScreenMonitor?.Stop();
@@ -153,6 +169,7 @@ public partial class App : Application
         {
             disposableUpdate.Dispose();
         }
+        _host.Services.GetService<IReminderService>()?.Stop();
 
         var trayService = _host.Services.GetRequiredService<ITrayService>();
         trayService.Shutdown();

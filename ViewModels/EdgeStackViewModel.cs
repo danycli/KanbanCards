@@ -24,6 +24,20 @@ public class NoteItem : ViewModelBase
         set { _slotIndex = value; OnPropertyChanged(); }
     }
 
+    private double _titleCanvasLeft;
+    public double TitleCanvasLeft
+    {
+        get => _titleCanvasLeft;
+        set { _titleCanvasLeft = value; OnPropertyChanged(); }
+    }
+
+    private double _titleMaxWidth = 230;
+    public double TitleMaxWidth
+    {
+        get => _titleMaxWidth;
+        set { _titleMaxWidth = value; OnPropertyChanged(); }
+    }
+
     private int _zIndex;
     public int ZIndex
     {
@@ -89,8 +103,6 @@ public class EdgeStackViewModel : ViewModelBase
     public Point RenderTransformOrigin => IsLeft ? new Point(0, 0.5) : new Point(1, 0.5);
     public HorizontalAlignment PlusHorizontalAlignment => IsLeft ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     public Thickness PlusMargin => IsLeft ? new Thickness(0, -4, 12, 0) : new Thickness(12, -4, 0, 0);
-    public double TitleCanvasLeft => IsLeft ? 20 : 16;
-    
     public Thickness CollapsedAddMargin
     {
         get
@@ -157,13 +169,14 @@ public class EdgeStackViewModel : ViewModelBase
         OnPropertyChanged(nameof(RenderTransformOrigin));
         OnPropertyChanged(nameof(PlusHorizontalAlignment));
         OnPropertyChanged(nameof(PlusMargin));
-        OnPropertyChanged(nameof(TitleCanvasLeft));
         UpdateVisibleNotes();
     }
 
     public async Task LoadNotesAsync()
     {
-        var notes = await _noteService.GetAllNotesAsync();
+        var notes = (await _noteService.GetAllNotesAsync())
+            .Where(note => note.Status != NoteStatus.Done && !note.IsArchived)
+            .ToList();
         _allNotes = new ObservableCollection<Note>(notes);
         int maxOffset = Math.Max(0, _allNotes.Count - 10);
         if (_scrollOffset > maxOffset) _scrollOffset = maxOffset;
@@ -203,6 +216,10 @@ public class EdgeStackViewModel : ViewModelBase
             ? new Thickness(-(280 - (280 - (index * 16))), 2, 0, 0)
             : new Thickness(0, 2, -(280 - (280 - (index * 16))), 0);
 
+    private double GetTitleCanvasLeft(int index) => IsLeft ? 20 + index * 16 : 16;
+
+    private double GetTitleMaxWidth(int index) => IsLeft ? 260 - index * 16 : 264 - index * 16;
+
     private void UpdateVisibleNotes()
     {
         var toShow = _allNotes.Skip(_scrollOffset).Take(10).ToList();
@@ -217,6 +234,8 @@ public class EdgeStackViewModel : ViewModelBase
                     Note = toShow[i],
                     SlotIndex = i,
                     ZIndex = 100 - i, // Top items have higher Z-Index to overlap bottom items
+                    TitleCanvasLeft = GetTitleCanvasLeft(i),
+                    TitleMaxWidth = GetTitleMaxWidth(i),
                     CollapsedMargin = GetCollapsedMargin(i),
                     ExpandedMargin = GetExpandedMargin(i)
                 });
@@ -229,6 +248,8 @@ public class EdgeStackViewModel : ViewModelBase
                 VisibleNotes[i].Note = toShow[i];
                 VisibleNotes[i].SlotIndex = i;
                 VisibleNotes[i].ZIndex = 100 - i;
+                VisibleNotes[i].TitleCanvasLeft = GetTitleCanvasLeft(i);
+                VisibleNotes[i].TitleMaxWidth = GetTitleMaxWidth(i);
                 VisibleNotes[i].CollapsedMargin = GetCollapsedMargin(i);
                 VisibleNotes[i].ExpandedMargin = GetExpandedMargin(i);
             }

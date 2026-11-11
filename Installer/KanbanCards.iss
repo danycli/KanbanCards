@@ -1,7 +1,7 @@
 [Setup]
 AppId=KanbanCards
 AppName=KanbanCards
-AppVersion=1.3.0
+AppVersion=1.4.0
 AppPublisher=danycli
 DefaultDirName={autopf}\KanbanCards
 DefaultGroupName=KanbanCards

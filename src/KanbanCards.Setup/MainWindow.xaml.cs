@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     public MainWindow(bool isUninstallMode, string targetDir)
     {
         InitializeComponent();
+        var version = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "1.4.0";
+        VersionText.Text = $"v{version}";
         _isUninstallMode = isUninstallMode;
         _targetDir = targetDir;
 

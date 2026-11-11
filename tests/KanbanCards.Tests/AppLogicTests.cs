@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using KanbanCards.Models;
 using KanbanCards.Services;
@@ -13,6 +14,146 @@ namespace KanbanCards.Tests;
 
 public class AppLogicTests
 {
+    [Fact]
+    public void ReminderSnooze_DelaysNotificationWithoutChangingDueDate()
+    {
+        var now = new DateTime(2026, 11, 11, 12, 0, 0, DateTimeKind.Utc);
+        var due = now.AddHours(-1);
+        var note = new Note
+        {
+            DueAt = due,
+            ReminderEnabled = true,
+            ReminderSentAt = now.AddMinutes(-1)
+        };
+
+        Assert.False(ReminderService.ShouldShowReminder(note, now));
+        ReminderService.Snooze(note, now);
+
+        Assert.Equal(due, note.DueAt);
+        Assert.Equal(now.AddMinutes(10), note.ReminderSnoozedUntil);
+        Assert.False(ReminderService.ShouldShowReminder(note, now.AddMinutes(9)));
+        Assert.True(ReminderService.ShouldShowReminder(note, now.AddMinutes(10)));
+    }
+
+    [Fact]
+    public async Task MainViewModel_WorkflowLanes_Search_PinAndOrderRemainConsistent()
+    {
+        var noteService = new MockNoteService();
+        var vm = new MainViewModel(noteService, new MockEditorService());
+        noteService.SetNotes(new[]
+        {
+            new Note { Id = 1, Title = "Inbox one", Status = NoteStatus.Inbox, SortOrder = 0, CreatedAt = DateTime.UtcNow.AddMinutes(1) },
+            new Note { Id = 2, Title = "Inbox two", Status = NoteStatus.Inbox, SortOrder = 1, CreatedAt = DateTime.UtcNow },
+            new Note { Id = 3, Title = "Finished card", Status = NoteStatus.Done, CreatedAt = DateTime.UtcNow.AddMinutes(-1) }
+        });
+
+        await vm.LoadNotesAsync();
+        Assert.Equal(3, vm.FilteredNotes.Count);
+        Assert.Equal(new[] { 1, 2 }, vm.InboxNotes.Select(note => note.Id));
+        Assert.Single(vm.DoneNotes);
+
+        vm.SearchText = "Finished";
+        await vm.LoadNotesAsync();
+        Assert.False(vm.CanReorder);
+        Assert.Empty(vm.InboxNotes);
+        Assert.Single(vm.DoneNotes);
+
+        vm.SearchText = string.Empty;
+        await vm.LoadNotesAsync();
+        Assert.True(vm.CanReorder);
+
+        await vm.ReorderLaneAsync(NoteStatus.Inbox, new[] { 2, 1 });
+        Assert.Equal(new[] { 2, 1 }, vm.InboxNotes.Select(note => note.Id));
+
+        var inboxCard = vm.InboxNotes.Single(note => note.Id == 1);
+        await vm.MoveNoteToStatusAsync(inboxCard, NoteStatus.Doing);
+        Assert.Empty(vm.InboxNotes.Where(note => note.Id == 1));
+        Assert.Single(vm.DoingNotes);
+
+        var completed = vm.DoneNotes.Single();
+        await vm.TogglePinAsync(completed);
+        Assert.True(vm.FilteredNotes[0].IsPinned);
+        Assert.Equal(3, vm.FilteredNotes[0].Id);
+    }
+
+    [Fact]
+    public async Task MainViewModel_DisablesReorderingForFilteredAndArchivedViews()
+    {
+        var noteService = new MockNoteService();
+        var active = new Note { Id = 1, Title = "Active", Priority = 1, Status = NoteStatus.Inbox };
+        var archived = new Note { Id = 2, Title = "Archived", ArchivedAt = DateTime.UtcNow, Status = NoteStatus.Inbox };
+        noteService.SetNotes(new[] { active, archived });
+        var vm = new MainViewModel(noteService, new MockEditorService());
+        await vm.LoadNotesAsync();
+
+        vm.PriorityFilter = 1;
+        await vm.LoadNotesAsync();
+        Assert.False(vm.CanReorder);
+        Assert.Contains("Clear filters", vm.ReorderHint);
+        Assert.Equal("1 of 1", vm.NoteCountText);
+
+        vm.PriorityFilter = -1;
+        vm.DueFilter = 1;
+        await vm.LoadNotesAsync();
+        Assert.False(vm.CanReorder);
+
+        vm.DueFilter = 0;
+        vm.IsArchiveView = true;
+        await vm.LoadNotesAsync();
+        Assert.False(vm.CanReorder);
+        Assert.Equal("1 note", vm.NoteCountText);
+    }
+
+    [Theory]
+    [InlineData("meeting", "Meeting notes", 2)]
+    [InlineData("daily", "Daily plan", 2)]
+    [InlineData("idea", "Idea", 1)]
+    public void MainViewModel_TemplatesSeedStructuredChecklist(string template, string expectedTitle, int expectedSteps)
+    {
+        var editor = new MockEditorService();
+        var vm = new MainViewModel(new MockNoteService(), editor);
+
+        vm.CreateTemplateCommand.Execute(template);
+
+        Assert.Equal(expectedTitle, editor.LastOpenedNote?.Title);
+        Assert.True(editor.LastOpenedIsNew);
+        var steps = JsonSerializer.Deserialize<string[]>(editor.LastOpenedNote!.ChecklistJson);
+        Assert.Equal(expectedSteps, steps?.Length);
+        Assert.All(steps!, step => Assert.StartsWith("[ ] ", step));
+    }
+
+    [Fact]
+    public async Task MainViewModel_DropToAnotherLaneMovesCardAndPersistsItsPosition()
+    {
+        var noteService = new MockNoteService();
+        noteService.SetNotes(new[]
+        {
+            new Note { Id = 1, Title = "Move me", Status = NoteStatus.Inbox, SortOrder = 8 },
+            new Note { Id = 2, Title = "First target", Status = NoteStatus.Next, SortOrder = 0 },
+            new Note { Id = 3, Title = "Second target", Status = NoteStatus.Next, SortOrder = 1 }
+        });
+        var vm = new MainViewModel(noteService, new MockEditorService());
+        await vm.LoadNotesAsync();
+
+        await vm.MoveNoteToLaneAsync(vm.InboxNotes.Single(), NoteStatus.Next, beforeNoteId: 2);
+
+        Assert.Empty(vm.InboxNotes);
+        Assert.Equal(new[] { 1, 2, 3 }, vm.NextNotes.Select(note => note.Id));
+        Assert.Equal(new[] { 0, 1, 2 }, vm.NextNotes.Select(note => note.SortOrder));
+    }
+
+    [Fact]
+    public void MainViewModel_DataMenuCommand_TogglesOpenState()
+    {
+        var vm = new MainViewModel(new MockNoteService(), new MockEditorService());
+
+        Assert.False(vm.IsDataMenuOpen);
+        vm.ToggleDataMenuCommand.Execute(null);
+        Assert.True(vm.IsDataMenuOpen);
+        vm.ToggleDataMenuCommand.Execute(null);
+        Assert.False(vm.IsDataMenuOpen);
+    }
+
     [Fact]
     public async Task MainViewModel_SearchByTitleAndDescription_FiltersCorrectly()
     {
@@ -104,6 +245,14 @@ public class AppLogicTests
         vm.ClearSearchCommand.Execute(null);
         await vm.LoadNotesAsync();
         Assert.Equal(2, vm.FilteredNotes.Count);
+
+        noteService.SetNotes(new[]
+        {
+            new Note { Id = 1, Title = "Note 1", Description = "Desc 1", CreatedAt = note1.CreatedAt, UpdatedAt = note1.UpdatedAt },
+            new Note { Id = 2, Title = "Note 2", Description = "Desc 2", CreatedAt = note2.CreatedAt, UpdatedAt = note2.UpdatedAt }
+        });
+        await vm.LoadNotesAsync();
+        Assert.Same(note2, vm.FilteredNotes.Single(note => note.Id == 2));
     }
 
     [Fact]
@@ -329,7 +478,7 @@ public class AppLogicTests
                 StackPosition = "Left",
                 AnimationSpeed = 85,
                 AutoCheckForUpdates = false,
-                LastDismissedUpdateVersion = "1.5.0"
+                LastDismissedUpdateVersion = "1.4.0"
             };
 
             // 1. Initial save
@@ -341,7 +490,7 @@ public class AppLogicTests
             Assert.Equal("Left", loaded.StackPosition);
             Assert.Equal(85, loaded.AnimationSpeed);
             Assert.False(loaded.AutoCheckForUpdates);
-            Assert.Equal("1.5.0", loaded.LastDismissedUpdateVersion);
+            Assert.Equal("1.4.0", loaded.LastDismissedUpdateVersion);
 
             // 2. Second save updates the file and preserves .bak
             settings.StackPosition = "Right";
@@ -447,6 +596,72 @@ public class AppLogicTests
             {
                 try { File.Delete(tempDbPath); } catch { }
             }
+        }
+    }
+
+    [Fact]
+    public async Task NoteService_StatusPinAndOrderUpdatesSurviveStaleEditorSave()
+    {
+        var tempDbPath = Path.Combine(Path.GetTempPath(), $"kanbanworkflow_{Guid.NewGuid()}.db");
+        try
+        {
+            var options = new DbContextOptionsBuilder<KanbanCards.Data.KanbanCardsDbContext>()
+                .UseSqlite(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                {
+                    DataSource = tempDbPath,
+                    Pooling = false
+                }.ToString())
+                .Options;
+            var factory = new TestDbContextFactory(options);
+            using (var initContext = factory.CreateDbContext())
+                initContext.Database.EnsureCreated();
+
+            var noteService = new NoteService(factory);
+            var dueAt = DateTime.UtcNow.AddHours(-1);
+            var reminderSentAt = DateTime.UtcNow.AddMinutes(-5);
+            var snoozedUntil = DateTime.UtcNow.AddMinutes(5);
+            var created = await noteService.CreateNoteAsync(new Note
+            {
+                Title = "Initial", Description = "Body", DueAt = dueAt, ReminderEnabled = true,
+                ReminderSentAt = reminderSentAt, ReminderSnoozedUntil = snoozedUntil
+            });
+            await noteService.UpdateNoteStatusAsync(created.Id, NoteStatus.Doing);
+            await noteService.UpdateNotePinAsync(created.Id, isPinned: true);
+            await noteService.ReorderNotesAsync(NoteStatus.Doing, new[] { created.Id });
+
+            // An editor opened before the board actions carries stale workflow metadata.
+            var staleEditorCopy = new Note
+            {
+                Id = created.Id,
+                Title = "Edited title",
+                Description = "Edited body",
+                Color = created.Color,
+                Status = NoteStatus.Inbox,
+                SortOrder = 0,
+                IsPinned = false,
+                DueAt = dueAt,
+                ReminderEnabled = true
+            };
+            await noteService.UpdateNoteAsync(staleEditorCopy);
+
+            var persisted = await noteService.GetNoteAsync(created.Id);
+            Assert.NotNull(persisted);
+            Assert.Equal("Edited title", persisted.Title);
+            Assert.Equal(NoteStatus.Doing, persisted.Status);
+            Assert.True(persisted.IsPinned);
+            Assert.Equal(0, persisted.SortOrder);
+            Assert.Equal(dueAt, persisted.DueAt);
+            Assert.Equal(reminderSentAt, persisted.ReminderSentAt);
+            Assert.Equal(snoozedUntil, persisted.ReminderSnoozedUntil);
+        }
+        finally
+        {
+            if (File.Exists(tempDbPath))
+                File.Delete(tempDbPath);
+            if (File.Exists(tempDbPath + "-wal"))
+                File.Delete(tempDbPath + "-wal");
+            if (File.Exists(tempDbPath + "-shm"))
+                File.Delete(tempDbPath + "-shm");
         }
     }
 
@@ -660,6 +875,145 @@ public class AppLogicTests
         thread.SetApartmentState(System.Threading.ApartmentState.STA);
         thread.Start();
         thread.Join();
+    }
+
+    [Fact]
+    public async Task MainViewModel_ArchivePriorityDueAndTagFiltersCompose()
+    {
+        var notes = new MockNoteService();
+        notes.SetNotes(new[]
+        {
+            new Note { Id = 1, Title = "Work review", TagsJson = "[\"work\"]", Priority = 2, DueAt = DateTime.UtcNow.AddDays(2) },
+            new Note { Id = 2, Title = "Archived work", TagsJson = "[\"work\"]", Priority = 2, DueAt = DateTime.UtcNow.AddDays(2), ArchivedAt = DateTime.UtcNow },
+            new Note { Id = 3, Title = "Home", Priority = 0 }
+        });
+        var vm = new MainViewModel(notes, new MockEditorService());
+        await vm.LoadNotesAsync();
+        vm.PriorityFilter = 2;
+        vm.DueFilter = 2;
+        vm.SearchText = "work";
+        await vm.LoadNotesAsync();
+        Assert.Single(vm.FilteredNotes);
+        Assert.Equal(1, vm.FilteredNotes[0].Id);
+
+        vm.IsArchiveView = true;
+        await vm.LoadNotesAsync();
+        Assert.Single(vm.FilteredNotes);
+        Assert.Equal(2, vm.FilteredNotes[0].Id);
+        Assert.Single(vm.InboxNotes);
+        Assert.True(vm.InboxNotes[0].IsArchived);
+    }
+
+    [Fact]
+    public async Task NoteEditor_ChecklistTogglesPersistAsStructuredMarkdown()
+    {
+        var notes = new MockNoteService();
+        var note = new Note { Id = 1, Title = "Checklist" };
+        notes.SetNotes(new[] { note });
+        using var vm = new NoteEditorViewModel(notes, note, isNew: false);
+        vm.NewChecklistItemText = "Review layout";
+        vm.AddChecklistItemCommand.Execute(null);
+        Assert.Single(vm.ChecklistItems);
+        vm.ChecklistItems[0].IsDone = true;
+        await vm.FlushAutosaveAsync();
+        Assert.Contains("[x] Review layout", note.ChecklistJson);
+        Assert.Equal("1/1 steps", note.ChecklistSummary);
+    }
+
+    [Fact]
+    public async Task NoteEditor_RefusesToCloseAnExistingCardWithoutATitle()
+    {
+        var notes = new MockNoteService();
+        var existing = new Note { Id = 1, Title = "Keep this card" };
+        notes.SetNotes(new[] { existing });
+        using var vm = new NoteEditorViewModel(notes, new Note { Id = 1, Title = string.Empty }, isNew: false);
+
+        Assert.False(await vm.FlushAutosaveAsync());
+        Assert.Equal("Add a title before saving this card.", vm.SaveError);
+        Assert.Single(await notes.GetAllNotesAsync());
+    }
+
+    [Fact]
+    public async Task NoteDataTransfer_RoundTripsUnicodeMetadataAndSkipsDuplicateNotes()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "KanbanCardsTransferTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var source = new MockNoteService();
+            var created = DateTime.UtcNow.AddDays(-4);
+            source.SetNotes(new[]
+            {
+                new Note { Id = 1, Title = "Café 계획 ✨", Description = "line one\nline two", Color = "#FFF176",
+                    Status = NoteStatus.Doing, Priority = 2, DueAt = DateTime.UtcNow.AddDays(2), ReminderEnabled = true,
+                    TagsJson = "[\"work\",\"ideas\"]", ChecklistJson = "[\"[x] first\",\"[ ] second\"]",
+                    CreatedAt = created, UpdatedAt = created.AddHours(1) }
+            });
+            var exportPath = Path.Combine(tempDir, "notes.json");
+            await new NoteDataTransferService(source).ExportJsonAsync(exportPath);
+            var target = new MockNoteService();
+            var transfer = new NoteDataTransferService(target);
+            var preview = await transfer.PreviewImportAsync(exportPath);
+            Assert.Equal(1, preview.NewNotes);
+            Assert.Equal(0, preview.Duplicates);
+            Assert.Equal(1, await transfer.ImportJsonAsync(exportPath));
+            preview = await transfer.PreviewImportAsync(exportPath);
+            Assert.Equal(0, preview.NewNotes);
+            Assert.Equal(1, preview.Duplicates);
+            Assert.Equal(0, await transfer.ImportJsonAsync(exportPath));
+            var imported = Assert.Single(await target.GetAllNotesAsync());
+            Assert.Equal("Café 계획 ✨", imported.Title);
+            Assert.Equal("line one\nline two", imported.Description);
+            Assert.Equal(NoteStatus.Doing, imported.Status);
+            Assert.Equal(2, imported.Priority);
+            Assert.Equal(created, imported.CreatedAt);
+            Assert.Equal("[\"work\",\"ideas\"]", imported.TagsJson);
+
+            var invalidPath = Path.Combine(tempDir, "invalid.json");
+            await File.WriteAllTextAsync(invalidPath, "{\"Version\":99,\"Notes\":[]}");
+            await Assert.ThrowsAsync<InvalidDataException>(() => transfer.ImportJsonAsync(invalidPath));
+            Assert.Single(await target.GetAllNotesAsync());
+        }
+        finally { Directory.Delete(tempDir, recursive: true); }
+    }
+
+    [Fact]
+    public async Task NoteDataTransfer_MarkdownExportIncludesReadableCardMetadataAndReplacesFile()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "KanbanCardsTransferTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var notes = new MockNoteService();
+            notes.SetNotes(new[]
+            {
+                new Note
+                {
+                    Id = 1, Title = "Café planning", Description = "First line\nSecond line", Color = "#FFCC80",
+                    Status = NoteStatus.Doing, Priority = 2, IsPinned = true, DueAt = DateTime.UtcNow.AddDays(1),
+                    ReminderEnabled = true, ArchivedAt = DateTime.UtcNow,
+                    TagsJson = "[\"work\",\"planning\"]", ChecklistJson = "[\"[x] Send agenda\",\"[ ] Review notes\"]"
+                }
+            });
+            var path = Path.Combine(tempDir, "cards.md");
+            await File.WriteAllTextAsync(path, "previous export");
+
+            await new NoteDataTransferService(notes).ExportMarkdownAsync(path);
+
+            var markdown = await File.ReadAllTextAsync(path);
+            Assert.DoesNotContain("previous export", markdown);
+            Assert.Contains("## Café planning", markdown);
+            Assert.Contains("- Lane: Doing", markdown);
+            Assert.Contains("- Priority: Urgent", markdown);
+            Assert.Contains("- Color: `#FFCC80`", markdown);
+            Assert.Contains("- Pinned: Yes", markdown);
+            Assert.Contains("- Reminder: Enabled", markdown);
+            Assert.Contains("- Archived: Yes", markdown);
+            Assert.Contains("Tags: work, planning", markdown);
+            Assert.Contains("- [x] Send agenda", markdown);
+            Assert.Contains("- [ ] Review notes", markdown);
+        }
+        finally { Directory.Delete(tempDir, recursive: true); }
     }
 
     private class TestPresentationSource : System.Windows.PresentationSource

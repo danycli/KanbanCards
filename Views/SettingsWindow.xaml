@@ -295,6 +295,23 @@
                                     <TextBlock Text="Instant" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Right"/>
                                 </Grid>
                             </StackPanel>
+                            <Border Height="1" Background="#F1F5F9" Margin="0,8,0,8"/>
+                            <Grid Margin="0,2,0,6">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Compact board cards" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Text="Show more cards in each lane" FontSize="11" Foreground="#94A3B8"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" IsChecked="{Binding CompactBoard}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                            </Grid>
+                            <StackPanel Margin="0,4,0,2">
+                                <Grid>
+                                    <TextBlock Text="Editor text size" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Text="{Binding EditorFontSize}" FontSize="12" FontWeight="SemiBold" Foreground="#6366F1" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Slider Minimum="13" Maximum="22" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding EditorFontSize}" Style="{StaticResource ModernSliderStyle}" Margin="0,8,0,2"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -322,6 +339,19 @@
                                 <CheckBox Grid.Column="2" IsChecked="{Binding AutoCheckForUpdates}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
                             </Grid>
 
+                            <Border Height="1" Background="#F1F5F9" Margin="0,8,0,10"/>
+
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Background="#FFF7ED" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13" Foreground="#D97706" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Due reminders" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Text="One quiet reminder at 9:00 AM on the due date" FontSize="11" Foreground="#94A3B8"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="2" IsChecked="{Binding EnableReminders}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                            </Grid>
                             <Border Height="1" Background="#F1F5F9" Margin="0,8,0,10"/>
 
                             <!-- Manual Check Button & Status -->
