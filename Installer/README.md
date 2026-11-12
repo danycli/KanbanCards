@@ -60,6 +60,8 @@ To build a fully self-contained installer (bundling the .NET 8 runtime):
 powershell -ExecutionPolicy Bypass -File .\Installer\build.ps1 -SelfContained
 ```
 
+Use `-SelfContained` for a GitHub release. The setup executable bundles and self-extracts its WPF native runtime files so the published asset can run by itself; the non-self-contained build is intended only for machines that already have the matching .NET 8 Desktop Runtime installed.
+
 ---
 
 ## Verifying Integrity

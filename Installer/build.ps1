@@ -27,6 +27,14 @@ if (-not $publishFullPath.StartsWith((Join-Path $repoFullPath 'bin\'), [System.S
 if (Test-Path -LiteralPath $publishFullPath) {
     Remove-Item -LiteralPath $publishFullPath -Recurse -Force
 }
+$outputFullPath = [System.IO.Path]::GetFullPath($OutputDir)
+$outputRoot = [System.IO.Path]::GetFullPath((Join-Path $InstallerDir 'Output')).TrimEnd('\') + '\'
+if (-not $outputFullPath.StartsWith($outputRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to clean release output outside Installer/Output: $outputFullPath"
+}
+if (Test-Path -LiteralPath $outputFullPath) {
+    Remove-Item -LiteralPath $outputFullPath -Recurse -Force
+}
 
 # 1. Publish main application
 Write-Host "[1/5] Publishing main application (Release/win-x64)..." -ForegroundColor Yellow
@@ -45,7 +53,7 @@ Write-Host ("      Payload compressed: {0:N2} MB" -f $zipSize) -ForegroundColor 
 # 3. Publish setup executable
 Write-Host "[3/5] Publishing native KanbanCardsSetup.exe..." -ForegroundColor Yellow
 if (-not (Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null }
-& dotnet publish "$SetupProjectDir\KanbanCards.Setup.csproj" -c Release -r win-x64 "-p:PublishSingleFile=true" $selfContainedArg -o $OutputDir
+& dotnet publish "$SetupProjectDir\KanbanCards.Setup.csproj" -c Release -r win-x64 "-p:PublishSingleFile=true" "-p:IncludeNativeLibrariesForSelfExtract=true" $selfContainedArg -o $OutputDir
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish KanbanCards.Setup failed" }
 
 # 4. Clean up temporary app.zip
